@@ -7,8 +7,9 @@ import fcntl
 
 exitFlag = False
 verbose = False
-im_lost = "no gps fix"
-im_good = "got gps fix"
+printFix = False
+im_lost = "lost"
+im_good = "fix"
 setNavCmnd = [0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 0x06,
               0x03, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00,
               0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C,
@@ -124,7 +125,7 @@ class communicationThread(threading.Thread):
 #                       handlers
 #########################################################################
 
-class ublox():
+class Ublox():
     def __init__(self, cb=None):
         self.cb = cb
 
@@ -141,17 +142,23 @@ class ublox():
         self.comm_thread = communicationThread(self.nmea_handler, self.ublox_handler)
         self.comm_thread.start()
 
+    def stop(self):
+        exitFlag = True
+
     def get_data(self):
         return self.GPSDAT
 
+    def set_status(self, new_status):
+        if self.GPSDAT['status'] != new_status:
+          print "gps status changed from %s to %s" % (self.GPSDAT['status'], new_status)
+        self.GPSDAT['status']=new_status
     def loop(self):
         if not self.isInFlightMode:
             print("set flight mode !")
             self.comm_thread.send_bytes(setNavCmnd)
         elapsed = time.time() - self.lastFixTime
         if elapsed > 1 * 60:
-            print("fix is too old (%s sec): %s" % (elapsed, im_lost))
-            self.GPSDAT["status"] = im_lost
+            self.set_status( im_lost )
             self.update_files()
             self.lastFixTime = time.time()
 
@@ -171,23 +178,25 @@ class ublox():
             DD_latitude = degrees_lat + fraction_lat  # latitude (decimal degrees)
             self.GPSDAT['lat'] = DD_latitude
             self.GPSDAT['lon'] = DD_longitude
+            self.GPSDAT['alt'] = float(self.GPSDAT['alt'])
         except Exception as x:
             print ("bad data while calc files: %s" % x)
             return
 
-        print("-----------------")
-        print("Lat %.4f" % self.GPSDAT['lat'])
-        print("Lon %.4f" % self.GPSDAT['lon'])
-        print("Alt %s" % self.GPSDAT["alt"])
-        print("Fix Time %s" % self.GPSDAT['fixTimeStr'])
-        print("Status %s" % self.GPSDAT["status"])
-        print("Nav Mode %s" % self.GPSDAT["navmode"])
-        print("Fix Mode %s" % self.GPSDAT["FixType"])
-        print("satellites %s" % self.GPSDAT["SatCount"])
-        print("ascent rate %s" % self.GPSDAT["accentRate"])
-        print("ground course %s" % self.GPSDAT['groundCourse'])
-        print("ground speed %s" % self.GPSDAT['groundSpeed'])
-        print
+        if printFix:
+          print("-----------------")
+          print("Lat %.4f" % self.GPSDAT['lat'])
+          print("Lon %.4f" % self.GPSDAT['lon'])
+          print("Alt %s" % self.GPSDAT["alt"])
+          print("Fix Time %s" % self.GPSDAT['fixTimeStr'])
+          print("Status %s" % self.GPSDAT["status"])
+          print("Nav Mode %s" % self.GPSDAT["navmode"])
+          print("Fix Mode %s" % self.GPSDAT["FixType"])
+          print("satellites %s" % self.GPSDAT["SatCount"])
+          print("ascent rate %s" % self.GPSDAT["accentRate"])
+          print("ground course %s" % self.GPSDAT['groundCourse'])
+          print("ground speed %s" % self.GPSDAT['groundSpeed'])
+          print
         lastFixTime = time.time()
 
     def tokenize(self, tokens, titles):
@@ -238,13 +247,13 @@ class ublox():
             if verbose:
               print("fix:  %s" % line)
             if self.parse_gnrmc(tokens):
-                self.GPSDAT["status"] = im_good
+                self.set_status( im_good )
             self.update_files()
         elif cmnd == "GNGGA":
             if verbose:
 		print("fix:  %s" % line)
             if self.parse_gngga(tokens):
-                self.GPSDAT["status"] = im_good
+                self.set_status(im_good)
             now = time.time()
             delta_time = now - self.lastAltTime
             if self.lastAltTime == 0:
@@ -285,6 +294,7 @@ class ublox():
 
 if __name__ == "__main__":
     gps = ublox()
+    printFix = True
     while not exitFlag:
         try:
             gps.loop()

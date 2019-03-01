@@ -12,7 +12,7 @@ pins = {
   'HILO' : 22   # LOW = 0.5W, Float = 1W
   }
 
-class dorji():
+class Dorji():
     def __init__(self,pins):
         self.pin = pins
 	GPIO.setwarnings(False)
@@ -21,6 +21,9 @@ class dorji():
         GPIO.setup(self.pin['PD'], GPIO.OUT)
 	GPIO.setup(self.pin['PTT'], GPIO.OUT)
 	GPIO.setup(self.pin['HILO'], GPIO.OUT)
+        GPIO.output(self.pin['PTT'], GPIO.HIGH) # LOW = TX, HIGH = RX
+        GPIO.output(self.pin['PD'], GPIO.HIGH)  # LOW = Sleep, HIGH = Normal
+	GPIO.output(self.pin['HILO'], GPIO.LOW) # LOW = 0.5W, Float = 1W
 
         os.system('gpio -g mode 18 alt5') # sets GPIO 18 pin to ALT 5 mode = GPIO_GEN1
 
@@ -52,30 +55,34 @@ class dorji():
             pass
 
     def init(self):
-        GPIO.output(self.pin['PTT'], GPIO.HIGH)
-        GPIO.output(self.pin['PD'], GPIO.HIGH)
-	GPIO.output(self.pin['HILO'], GPIO.LOW)
+        print "radio init"
         self.cmnd('AT+DMOCONNECT\r\n')
 
     def scan(self, freq):
+        print "radio scan %s" % freq
         self.cmnd("S+%.4f\r\n" % freq)
 
     def freq(self, freq):
+        print "radio freq %s" % freq
         self.cmnd("AT+DMOSETGROUP=0,%.4f,%.4f,0000,4,0000\r\n" % (freq, freq))
 
     def tx(self):
+        print "radio tx"
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.LOW)
 
     def rx(self):
+        print "radio rx"
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
 
     def standby(self):
+        print "radio standby"
         GPIO.output(self.pin['PD'], GPIO.LOW)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
 
     def power(self, level):
+        print "radio power %s" % level
         GPIO.setup(self.pin['HILO'], GPIO.OUT)
         if level == "high":
             GPIO.output(self.pin['HILO'], GPIO.HIGH)
@@ -85,31 +92,24 @@ class dorji():
 ##################################################
 
 if __name__ == "__main__":
-    radio = dorji(pins)
+    radio = Dorji(pins)
     if len(sys.argv) == 1:
         print "no arguments"
     elif sys.argv[1] == "init":
-        print "init"
         radio.init()
     elif sys.argv[1] == "scan":
         freq = float(sys.argv[2])
-        print "scan %.4f" % freq
 	radio.scan(freq)
     elif sys.argv[1] == "freq":
         freq = float(sys.argv[2])
-        print "freq %.4f" % freq
         radio.freq(freq)
     elif sys.argv[1] == "tx":
-        print "tx"
 	radio.tx()
     elif sys.argv[1] == "rx":
-        print "rx"
         radio.rx()
     elif sys.argv[1] == "stby":
-        print "standby"
 	radio.standby()
     elif sys.argv[1] == "power":
-        print "power %s" % sys.argv[2]
         radio.power(sys.argv[2])
     else:
         print "unknown"

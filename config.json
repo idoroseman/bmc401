@@ -9,8 +9,12 @@
     "BUZZER": 13
   },
   "timers":{
-   "APRS": 5,
+   "APRS": 2,
    "SSTV": 15,
+   "BIT":  1
+  },
+  "frequencies":{
+   "APRS":144.800
   }
 }
 

@@ -1,9 +1,12 @@
 import os
+import json
+import time
 
 from aprs import APRS
 from modem import AFSK
-from ublox import ublox
-from dorji import dorji
+from ublox import Ublox
+from dorji import Dorji
+from timers import Timers
 
 def main():
     # setup
@@ -14,21 +17,27 @@ def main():
         os.makedirs(data_dir)
     aprs = APRS(config['callsign'], config['ssid'])
     modem = AFSK()
-    gps = ublox()
-    radio = dorji()
+    gps = Ublox()
+    radio = Dorji(config['pins'])
     radio.init()
-    timers = timers()
+    timers = Timers(config['timers'])
     exitFlag = False
     while not exitFlag:
       try:
         gps.loop()
         if timers.expired("APRS"):
-          frame = aprs.create_location_msg(True, 32.061111, 34.874444, 100, "idoroseman.com", [])
+          gpsdata = gps.get_data()
+          frame = aprs.create_location_msg(gpsdata, "idoroseman.com", [])
           modem.encode(frame.toString())
           modem.saveToFile(os.path.join(data_dir,'aprs.wav'))
-        time.sleep(5)
+          radio.freq(config['frequencies']['APRS'])
+          radio.tx()
+          os.system("aplay "+os.path.join(data_dir,'aprs.wav'))
+          radio.rx()
+        time.sleep(0.1)
       except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
         exitFlag = True
+        gps.stop()
         break
     print "Done."
 
