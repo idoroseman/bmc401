@@ -1,0 +1,16 @@
+{ 
+  "name": "balloon5",
+  "callsign": "4x6ub",
+  "ssid": 11,
+  "pins": {
+    "PTT": 17,
+    "PD": 27,
+    "HILO": 22,
+    "BUZZER": 13
+  },
+  "timers":{
+   "APRS": 5,
+   "SSTV": 15,
+  }
+}
+
