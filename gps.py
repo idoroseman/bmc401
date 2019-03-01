@@ -14,13 +14,9 @@ im_good = "got gps fix"
 lastFixTime = time.time()
 lastAltTime = 0
 prev_alt = 0.0
-GPSDAT = {"status": "init",
-          "navmode": "unknown",
-          "lat": "0.00",
-          "lon": "0.00",
-          "alt": 0,
-          "fixTime": "000000"}
-
+GPSDAT = {"status":"init", "navmode":"unknown",
+          "lat":"0.00", "lon":"0.00", "alt":0, 
+          "fixTime":"000000", "FixType":"?" ,"SatCount" :0}
 
 #########################################################################
 #                    comm thread
@@ -28,68 +24,68 @@ GPSDAT = {"status": "init",
 
 # sudo bash -c "echo options i2c_bcm2708 baudrate=50000 > /etc/modprobe.d/i2c.conf"
 
-class communicationThread(threading.Thread):
+class communicationThread (threading.Thread):
     def __init__(self, onNMEA, onUBLOX):
         threading.Thread.__init__(self)
         self.onNMEA = onNMEA
         self.onUBLOX = onUBLOX
         # setup i2c
-        I2C_SLAVE = 0x0703
-        bus = 1
+        I2C_SLAVE=0x0703
+        bus=1
         device = 0x42
-        self.fr = io.open("/dev/i2c-" + str(bus), "r+b", buffering=0)
-        self.fw = io.open("/dev/i2c-" + str(bus), "w+b", buffering=0)
+        self.fr = io.open("/dev/i2c-"+str(bus), "r+b", buffering=0)
+        self.fw = io.open("/dev/i2c-"+str(bus), "w+b", buffering=0)
         # set device address
         fcntl.ioctl(self.fr, I2C_SLAVE, device)
         fcntl.ioctl(self.fw, I2C_SLAVE, device)
 
     def send_bytes(self, buffer):
-        data = bytearray(len(buffer))
-        data[0:] = buffer[0:]
-        try:
-            self.fw.write(data)
-        except:
-            print("i2c write error")
+      data = bytearray(len(buffer))
+      data[0:] = buffer[0:]
+      try:
+        self.fw.write(data)
+      except:
+        print("i2c write error")
 
     def read_byte(self):
-        ch = 255
-        while ch == 255:
-            try:
-                if exitFlag:
-                    return ch
-                ch = self.fr.read(1)
-                if ch == 255:
-                    time.sleep(0.1)
-            except IOError as x:
-                time.sleep(0.1)
-        return ch
+      ch =255
+      while ch == 255:
+        try:
+          if exitFlag:
+            return ch
+          ch = self.fr.read(1) 
+          if ch==255:
+            time.sleep(0.1)
+        except IOError as x:
+          time.sleep(0.1)
+      return ch
 
     def calc_nmea_chksum(self, line):
-        calc_cksum = 0
-        for s in line[1:]:
-            calc_cksum ^= ord(s)
-        return hex(calc_cksum)
+      calc_cksum = 0
+      for s in line[1:]: 
+        calc_cksum ^= ord(s)
+      return hex(calc_cksum)
 
     def calc_ublox_chksum(self, buffer):
-        l = buffer[4]
-        a, b = 0, 0
-        for x in buffer[2:6 + l]:
-            a = (a + x) & 0xff
-            b = (b + a) & 0xff
-        return a & 0xff, b & 0xff
+      l = buffer[4]
+      a, b = 0, 0
+      for x in buffer[2:6+l]:
+        a = (a + x) & 0xff
+        b = (b + a) & 0xff
+      return a & 0xff,b & 0xff 
 
     def parse_nmea(self, line):
-        if line.count('*') != 1:
-            return
-        msg, chksum = line.split('*')
-        calc = self.calc_nmea_chksum(msg)
-        if calc == "0x" + chksum:
-            self.onNMEA(msg)
+      if line.count('*') != 1:
+        return 
+      msg, chksum = line.split('*')
+      calc = self.calc_nmea_chksum(msg)
+      if calc == "0x"+chksum:
+        self.onNMEA(msg)
 
     def parse_ublox(self, buffer):
-        a, b = self.calc_ublox_chksum(buffer)
-        if a == buffer[-2] and b == buffer[-1]:
-            self.onUBLOX(buffer)
+      a, b = self.calc_ublox_chksum(buffer)
+      if a==buffer[-2] and b==buffer[-1]:
+        self.onUBLOX(buffer)
 
     def run(self):
         global exitFlag
@@ -99,32 +95,31 @@ class communicationThread(threading.Thread):
         response = ""
         ch = ' '
         while not exitFlag:
-            try:
-                prev_ch = ch
-                ch = self.read_byte()
-                if rxNMEA:
-                    if ch == '\n' or ch == '\r':
-                        self.parse_nmea(response)
-                        response = ""
-                        rxNMEA = False
-                    else:
-                        response += chr(ord(ch) & 0x7f)
-                elif rxUBLOX:
-                    response.append(ord(ch))
-                    if len(response) >= 8 and len(response) == 8 + response[4]:
-                        self.parse_ublox(response)
-                        response = ""
-                        rxUBLOX = False
-                elif ord(prev_ch) == 0xB5 and ord(ch) == 0x62:
-                    rxUBLOX = True
-                    response = [ord(prev_ch), ord(ch)]
-                elif ch == '$':
-                    rxNMEA = True
-                    response = ch
-            except Exception as x:
-                print("Exception: %s" % x)
+          try:
+            prev_ch = ch
+            ch = self.read_byte()
+            if rxNMEA:
+              if ch == '\n' or ch == '\r':
+                self.parse_nmea(response)
+                response = ""
+                rxNMEA = False
+              else:
+                response += chr(ord(ch) & 0x7f)
+            elif rxUBLOX:
+               response.append(ord(ch))
+               if len(response) >= 8 and len(response) == 8 + response[4]:
+                 self.parse_ublox(response)
+                 response = ""
+                 rxUBLOX = False
+            elif ord(prev_ch) == 0xB5 and ord(ch)== 0x62:
+               rxUBLOX = True
+               response = [ ord(prev_ch), ord(ch) ]
+            elif ch == '$':
+               rxNMEA = True
+               response = ch
+          except Exception as x:
+            print("Exception: %s" % x)
         print "Exiting Communication Thread"
-
 
 #########################################################################
 #                       handlers
@@ -133,148 +128,160 @@ class communicationThread(threading.Thread):
 def update_files(filename="gps"):
     global GPSDAT
     try:
-        # Change latitue and longitude to decimal degrees format
-        longitude = GPSDAT["lon"]
-        latitude = GPSDAT["lat"]
-        degrees_lon = float(longitude[:3])
-        fraction_lon = float(longitude[3:]) / 60
-        degrees_lat = float(latitude[:2])
-        fraction_lat = float(latitude[2:]) / 60
-        DD_longitude = degrees_lon + fraction_lon  # longitude (decimal degrees)
-        DD_latitude = degrees_lat + fraction_lat  # latitude (decimal degrees)
-        timestr = GPSDAT['fixTime'][0:2] + ':' + GPSDAT['fixTime'][2:4]
+      # Change latitue and longitude to decimal degrees format
+      longitude = GPSDAT["lon"]
+      latitude = GPSDAT["lat"]
+      altitude = GPSDAT["alt"]
+      status = GPSDAT["status"]
+      navMode = GPSDAT["navmode"]
+      timeStr = GPSDAT['fixTime'][0:2] + ':' + GPSDAT['fixTime'][2:4]
+      accentRate = GPSDAT["accentRate"] if "accentRate" in GPSDAT else 0
+      # calculate
+      degrees_lon = float(longitude[:3])
+      fraction_lon = float(longitude[3:]) / 60
+      degrees_lat = float(latitude[:2])
+      fraction_lat = float(latitude[2:]) / 60
+      DD_longitude = degrees_lon + fraction_lon  # longitude (decimal degrees)
+      DD_latitude = degrees_lat + fraction_lat # latitude (decimal degrees)
+      
     except Exception as x:
-        print ("bad data while calc files: %s" % x)
-        return
+      print ("bad data while calc files: %s" % x) 
+      return
 
-    jsondat = {
-        'Lat': DD_latitude,
-        'Lon': DD_longitude,
-        'Alt': GPSDAT["alt"],
-        'fixTime': timestr,
-        'Status': GPSDAT["status"],
-        'NavMode': GPSDAT["navmode"]
-    }
-    if "accentRate" in GPSDAT:
-        jsondat["accentRate"] = GPSDAT["accentRate"]
-
-    file = open(filename + ".json", "w")
-    file.write(json.dumps(jsondat, indent=2))
-    file.close()
-
-    file = open(filename + ".txt", "w")
-    if GPSDAT["status"] == im_lost:
-        file.write("No GPS fix\n")
-    else:
-        file.write("Lat %.4f\n" % DD_latitude)
-        file.write("Lon %.4f\n" % DD_longitude)
-        file.write("Alt %s\n" % GPSDAT["alt"])
-    file.close()
+    print("-----------------")
+    print("Lat %.4f" % DD_latitude)
+    print("Lon %.4f" % DD_longitude)
+    print("Alt %s" % altitude)
+    print("Fix Time %s" % timeStr)
+    print("Status %s" % status)
+    print("Nav Mode %s" % navMode)
+    print("Fix Mode %s" % GPSDAT["FixType"])
+    print("satellites %s" % GPSDAT["SatCount"])
+    print("ascent rate %s" % accentRate)
+    print
     lastFixTime = time.time()
-
 
 def tokenize(tokens, titles):
     rv = {}
     for i, k in enumerate(titles):
-        rv[k] = tokens[i]
+      rv[k] = tokens[i]
     return rv
-
 
 def parse_gnrmc(tokens):
     global GPSDAT
-    RMCDAT = tokenize(tokens,
-                      ['strType', 'fixTime', 'status', 'lat', 'latDir',
-                       'lon', 'lonDir', 'groundSpeed', 'groundCourse',
-                       'date', 'mode'])
+    RMCDAT = tokenize(tokens, 
+                ['strType', 'fixTime', 'status', 'lat', 'latDir',
+                 'lon', 'lonDir', 'groundSpeed', 'groundCourse',
+                 'date','mode'])
     if RMCDAT["lat"] == "":
-        return False
+      return False
     for i, k in enumerate(['fixTime', 'lat', 'latDir', 'lon', 'lonDir']):
         GPSDAT[k] = RMCDAT[k]
     return True
 
-
 def parse_gngga(tokens):
     global GPSDAT
-    GGADAT = tokenize(tokens,
-                      ['strType', 'fixTime',
-                       'lat', 'latDir', 'lon', 'lonDir',
-                       'fixQual', 'numSat', 'horDil',
-                       'alt', 'altUnit', 'galt', 'galtUnit',
-                       'DPGS_updt', 'DPGS_ID'])
+    GGADAT = tokenize(tokens, 
+                ['strType', 'fixTime', 
+                'lat', 'latDir', 'lon', 'lonDir',
+                'fixQual', 'numSat', 'horDil', 
+                'alt', 'altUnit', 'galt', 'galtUnit',
+                'DPGS_updt', 'DPGS_ID'])
     if GGADAT["lat"] == "":
-        return False
-    for i, k in enumerate(['fixTime', 'lat', 'latDir', 'lon', 'lonDir', 'alt']):
+      return False
+    for i, k in enumerate(['fixTime', 'lat', 'latDir', 'lon', 'lonDir', 'alt']): 
         GPSDAT[k] = GGADAT[k]
     return True
 
+def parse_gngsa(tokens):
+    global GPSDAT
+    GPSDAT["FixType"] = tokens[1] + tokens[2]
+    count = 0
+    for id in tokens[3:14]:
+      if id != "":
+        count += 1
+    GPSDAT["SatCount"] = count
+    return True
+
+def nmea_handler(line):
+  global lastAltTime, prev_alt
+
+  tokens = line.split(',')
+  cmnd = tokens[0][1:]
+  if cmnd == "GNTXT":
+    pass
+  elif cmnd == "GNRMC":
+    print("fix:  %s" % line)
+    if parse_gnrmc(tokens):
+      GPSDAT["status"] = im_good
+      update_files()
+  elif cmnd == "GNGGA":
+    print("fix:  %s" % line)
+    if parse_gngga(tokens):
+      GPSDAT["status"] = im_good
+      now = time.time()
+      delta_time = now - lastAltTime
+      if lastAltTime == 0:
+         lastAltTime = now
+         prev_alt = float(GPSDAT["alt"])
+         GPSDAT['accentRate'] = 0
+      elif delta_time > 10 :
+        delta_alt = float(GPSDAT["alt"]) - prev_alt
+        accent = delta_alt/delta_time
+        print("%s m / %s sec = %s" % ( delta_alt, delta_time, accent))
+        GPSDAT["accentRate"] = 0.7 * GPSDAT["accentRate"] + 0.3 * accent
+        lastAltTime = now
+      update_files()
+  elif cmnd == "GNGSA":
+    print("stts: %s" % line)
+    parse_gngsa(tokens)
+  else:
+    pass
+#    print("nmea: %s" % line)
+
+def ublox_handler(buffer):
+  global isInFlightMode
+  ack = [181, 98, 5, 1, 2, 0, 6, 36, 50, 91]
+  if buffer == ack:
+    print("got ACK !")
+    GPSDAT["navmode"] = "flight"
+    isInFlightMode = True
+    update_files()
+  else:
+    print("ublox: %s" % buffer)
 
 #########################################################################
 #                      M A I N
 #########################################################################
-class ublox():
-    def __init__(self, cb=None):
-        self.cb = cb
-        self.comm_thread = communicationThread(self.nmea_handler, self.ublox_handler)
-        self.comm_thread.start()
 
-        self.set_flight_mode()
+if __name__ == "__main__":
+  # Create new thread
+  comm_thread = communicationThread(nmea_handler, ublox_handler)
+  comm_thread.start()
+  
+  # main loop
+  update_files()
+  setNav =   [0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 0x06, 
+              0x03, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00, 
+              0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C, 
+              0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0xDC]
 
-    def get_data(self):
-        global GPSDAT
-        return GPSDAT
+  while not exitFlag:
+    try:
+      if not isInFlightMode:
+        print("set flight mode !")
+        comm_thread.send_bytes(setNav)
 
-    def set_flight_mode(self):
-        global comm_thread
-        setNav = [0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 0x06,
-                  0x03, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00,
-                  0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C,
-                  0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0xDC]
-
-        self.comm_thread.send_bytes(setNav)
-
-    def nmea_handler(self, line):
-        global lastAltTime, prev_alt, GPSDAT
-
-        tokens = line.split(',')
-        cmnd = tokens[0][1:]
-        if cmnd == "GNTXT":
-            pass
-        elif cmnd == "GNRMC":
-            print("fix:  %s" % line)
-            if parse_gnrmc(tokens):
-                GPSDAT["status"] = im_good
-                self.cb()
-        elif cmnd == "GNGGA":
-            print("fix:  %s" % line)
-            if parse_gngga(tokens):
-                GPSDAT["status"] = im_good
-                now = time.time()
-                delta_time = now - lastAltTime
-                if lastAltTime == 0:
-                    lastAltTime = now
-                    prev_alt = float(GPSDAT["alt"])
-                    GPSDAT['accentRate'] = 0
-                elif delta_time > 10:
-                    delta_alt = float(GPSDAT["alt"]) - prev_alt
-                    accent = delta_alt / delta_time
-                    print("%s m / %s sec = %s" % (delta_alt, delta_time, accent))
-                    GPSDAT["accentRate"] = 0.7 * GPSDAT["accentRate"] + 0.3 * accent
-                    lastAltTime = now
-                self.cb()
-        else:
-            print("nmea: %s" % line)
-
-    def ublox_handler(self, buffer):
-        global isInFlightMode
-        ack = [181, 98, 5, 1, 2, 0, 6, 36, 50, 91]
-        if buffer == ack:
-            print("got ACK")
-            GPSDAT["navmode"] = "flight"
-            isInFlightMode = True
-            self.cb()
-        else:
-            print("ublox: %s" % buffer)
-
-
+      elapsed = time.time() - lastFixTime
+      if elapsed > 1*60:
+          print("fix is too old (%s sec)" % elapsed)
+          GPSDAT["status"] = im_lost
+          update_files()
+          lastFixTime = time.time()
+      time.sleep(5)
+    except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly
+      exitFlag = True
+      break
+  print "Done."
 
