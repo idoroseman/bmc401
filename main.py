@@ -4,6 +4,7 @@ from aprs import APRS
 from modem import AFSK
 
 data_dir = "./data"
+
 def main():
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
