@@ -163,4 +163,3 @@ class AFSK():
         for i in range(8):
             self.make_and_write_bit( Character & 1, BitStuffing)
             Character >>= 1
-        self.bc = 0

@@ -7,11 +7,11 @@ class APRS():
         self.ssid = ssid
         self.symbol = symbol
         self.sequence_counter = 0
-
+        self.dest = "APE6UB"  # was "APRS"
     def create_frame(self):
-        return ax25(self.callsign, self.ssid, "APRS", 0, "WIDE1", 1, "WIDE2", 1)
+        return ax25(self.callsign, self.ssid, self.dest, 0, "WIDE1", 1, "WIDE2", 1)
 
-    def create_location_msg(self, gps , comment, telemetry):
+    def create_location_msg(self, gps , comment, telemetry=[] ):
         # see Chapter 9: Compressed Position Report Data Formats
         # Convert the min.dec coordinates to APRS compressed format
         aprs_lat = 900000000 - gps['lat'] * 10000000
@@ -29,16 +29,27 @@ class APRS():
         frame.add_byte(self.symbol) # symbol code: BALLOON
         cs = log(aprs_alt) / log(1.002) # altitude = 1.002^cs (in feet)
         frame.add_base91enc(cs, 2)
-        frame.add_byte( 0x30 ) # Compression Type : current fix, NMEA GGA ( pos + alt ), origin = compressed
-        frame.add_string(comment)
+        frame.add_byte( 0x38 ) # Compression Type : current fix, NMEA GGA ( pos + alt ), origin = compressed
+#        frame.add_string("   ")
         # see http://he.fi/doc/aprs-base91-comment-telemetry.txt
         if telemetry:
             frame.add_byte('|')
             frame.add_base91enc(self.sequence_counter, 2)
             self.sequence_counter = (self.sequence_counter + 1) & 0x1FFF
-            for i in range(len(telemetry)):
+            for i in telemetry:
                 frame.add_base91enc(telemetry[i],2)
             frame.add_byte('|')
+        frame.add_string(comment)
+        return frame
+
+    def create_telem_name_msg(self, telemetry):
+        frame = self.create_frame()
+        frame.add_byte(":")
+        me = self.callsign + '-' + str(self.ssid)
+        frame.add_string(me.ljust(9))
+        frame.add_byte(":")
+        frame.add_string("PARM.")
+        frame.add_string(",".join(telemetry.keys()))
         return frame
 
     def create_message_msg(self, to, msg):
@@ -77,9 +88,15 @@ if __name__ == "__main__":
                'fixTimeStr': '16:30',
                'accentRate': 0.40599678574441816
                }
+    telemetry = {'Satellites':4,
+	     'TemperatureIn':26,
+             'TemperatureOut':26,
+             'Pressure':1024,
+             'Battery':5 }
     aprs = APRS('4x6ub', 11)
-    frame = aprs.create_location_msg(gpsdata, "idoroseman.com", [])
-    print frame.toString()
+    frame = aprs.create_location_msg(gpsdata, "idoroseman.com", telemetry)
+    #frame = aprs.create_telem_name_msg(telemetry)
+    # print frame.toString()
     modem = AFSK()
     modem.encode(frame.toString())
     modem.saveToFile('data/aprs.wav')
