@@ -10,6 +10,7 @@
   },
   "timers":{
    "APRS": 1,
+   "APRS-META":2,
    "SSTV": 15,
    "BIT":  1
   },

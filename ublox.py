@@ -4,6 +4,7 @@ import threading
 import time
 import io
 import fcntl
+import smbus
 
 verbose = False
 printFix = False
@@ -14,7 +15,8 @@ setNavCmnd = [0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 0x06,
               0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C,
               0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0xDC]
-
+bus = 1
+device = 0x42
 
 #########################################################################
 #                    comm thread
@@ -29,8 +31,6 @@ class communicationThread(threading.Thread):
         self.onUBLOX = onUBLOX
         # setup i2c
         I2C_SLAVE = 0x0703
-        bus = 1
-        device = 0x42
         self.fr = io.open("/dev/i2c-" + str(bus), "r+b", buffering=0)
         self.fw = io.open("/dev/i2c-" + str(bus), "w+b", buffering=0)
         # set device address
@@ -142,8 +142,20 @@ class Ublox():
                        "fixTime": "000000", "FixType": "?", "SatCount": 0,
                        "accentRate": 0, 'groundSpeed':"?", 'groundCourse':"?"}
 
-        self.comm_thread = communicationThread(self.nmea_handler, self.ublox_handler)
-        self.comm_thread.start()
+        if self.bit() == 0:
+          self.comm_thread = communicationThread(self.nmea_handler, self.ublox_handler)
+          self.comm_thread.start()
+        else:
+          raise Exception("GPS not connected")
+
+    def bit(self):
+        rv = 0
+        bus = smbus.SMBus(1)
+        try:
+          bus.read_byte(device)
+        except:
+          rv |= 0x01
+        return rv
 
     def stop(self):
         self.exitFlag = True
