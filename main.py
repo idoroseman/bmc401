@@ -28,6 +28,9 @@ def main():
         if timers.expired("APRS"):
           gpsdata = gps.get_data()
           frame = aprs.create_location_msg(gpsdata, "idoroseman.com", [])
+          print gpsdata
+          print frame
+	  print frame.toString()
           modem.encode(frame.toString())
           modem.saveToFile(os.path.join(data_dir,'aprs.wav'))
           radio.freq(config['frequencies']['APRS'])

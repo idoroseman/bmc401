@@ -58,3 +58,29 @@ class APRS():
         return frame
 
 
+if __name__ == "__main__":
+    from modem import AFSK
+    gpsdata = {'status': 'fix',
+               'latDir': 'N',
+               'FixType': 'A3',
+               'fixTime': '163018.00',
+               'lat_raw': '3203.79986',
+               'lat': 32.063331,
+               'alt': 129.7,
+               'navmode': 'flight',
+               'lonDir': 'E',
+               'groundSpeed': '0.082',
+               'lon': 34.87216566666667,
+               'SatCount': 4,
+               'groundCourse': '',
+               'lon_raw': '03452.32994',
+               'fixTimeStr': '16:30',
+               'accentRate': 0.40599678574441816
+               }
+    aprs = APRS('4x6ub', 11)
+    frame = aprs.create_location_msg(gpsdata, "idoroseman.com", [])
+    print frame.toString()
+    modem = AFSK()
+    modem.encode(frame.toString())
+    modem.saveToFile('data/aprs.wav')
+

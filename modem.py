@@ -80,6 +80,9 @@ class AFSK():
         for j in range(message_count):
             message_length = len(Messages[j])
             # Write preamble
+            for i in range(preamble_length):
+		self.make_and_write_freq(0)
+
             for i in range(flags_before):
                 self.make_and_write_byte( 0x7E, 0) #######
 
@@ -93,7 +96,8 @@ class AFSK():
             # Write postamble
             for i in range(postamble_length):
                 self.make_and_write_freq(0)
-
+	for i in range(10):
+	    self.buffer += [0, 0, 0, 0]
     # Makes 44 - byte header for 8 - bit WAV in memory
     # usage: wavhdr(pointer, sampleRate, dataLength)
     def wavhdr(self, dlen):

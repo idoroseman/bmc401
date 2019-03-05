@@ -1,11 +1,10 @@
 #!/usr/bin/python
-
+from traceback import print_exc
 import threading
 import time
 import io
 import fcntl
 
-exitFlag = False
 verbose = False
 printFix = False
 im_lost = "lost"
@@ -37,6 +36,10 @@ class communicationThread(threading.Thread):
         # set device address
         fcntl.ioctl(self.fr, I2C_SLAVE, device)
         fcntl.ioctl(self.fw, I2C_SLAVE, device)
+        self.exitFlag = False
+
+    def stop(self):
+        self.exitFlag = True
 
     def send_bytes(self, buffer):
         data = bytearray(len(buffer))
@@ -50,7 +53,7 @@ class communicationThread(threading.Thread):
         ch = 255
         while ch == 255:
             try:
-                if exitFlag:
+                if self.exitFlag:
                     return ch
                 ch = self.fr.read(1)
                 if ch == 255:
@@ -87,13 +90,12 @@ class communicationThread(threading.Thread):
             self.onUBLOX(buffer)
 
     def run(self):
-        global exitFlag
         print "Starting Communication Thread"
         rxNMEA = False
         rxUBLOX = False
         response = ""
         ch = ' '
-        while not exitFlag:
+        while not self.exitFlag:
             try:
                 prev_ch = ch
                 ch = self.read_byte()
@@ -118,6 +120,7 @@ class communicationThread(threading.Thread):
                     response = ch
             except Exception as x:
                 print("Exception: %s" % x)
+                print_exc()
         print "Exiting Communication Thread"
 
 
@@ -143,7 +146,8 @@ class Ublox():
         self.comm_thread.start()
 
     def stop(self):
-        exitFlag = True
+        self.exitFlag = True
+        self.comm_thread.stop()
 
     def get_data(self):
         return self.GPSDAT
@@ -152,12 +156,14 @@ class Ublox():
         if self.GPSDAT['status'] != new_status:
           print "gps status changed from %s to %s" % (self.GPSDAT['status'], new_status)
         self.GPSDAT['status']=new_status
+
     def loop(self):
         if not self.isInFlightMode:
             print("set flight mode !")
             self.comm_thread.send_bytes(setNavCmnd)
+            time.sleep(1)
         elapsed = time.time() - self.lastFixTime
-        if elapsed > 1 * 60:
+        if elapsed > 2 * 60:
             self.set_status( im_lost )
             self.update_files()
             self.lastFixTime = time.time()
@@ -293,14 +299,14 @@ class Ublox():
 #########################################################################
 
 if __name__ == "__main__":
-    gps = ublox()
+    gps = Ublox()
     printFix = True
-    while not exitFlag:
+    while True:
         try:
             gps.loop()
             time.sleep(5)
         except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
-            exitFlag = True
+            gps.stop()
             break
         except Exception(x):
             print x

@@ -3,7 +3,6 @@ class ax25():
 
     def __init__(self, src_callsign, src_ssid, dest_callsign, dest_ssid, path1, ttl1, path2, ttl2):
         self.frame = ''
-        self.add_byte(0x7e) # flag
         self.add_callsign(dest_callsign, dest_ssid)
         self.add_callsign(src_callsign, src_ssid)
         self.add_callsign(path1, ttl1)
@@ -54,5 +53,5 @@ class ax25():
 
 
     def toString(self):
-        return self.frame + self.calc_crc() + chr(0x7e)
+        return chr(0x7e) + self.frame + self.calc_crc() + chr(0x7e)
 
