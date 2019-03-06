@@ -27,12 +27,24 @@ class APRS():
         frame.add_base91enc(aprs_lat, 4)
         frame.add_base91enc(aprs_lon, 4)
         frame.add_byte(self.symbol) # symbol code: BALLOON
+
+        # Course / Speed
+        try:
+            c = self.GPSDAT['groundCourse'] / 4
+            s = log(self.GPSDAT['groundSpeed'] - 1) / log( 1.08 )
+            frame.add_byte(33+c)
+            frame.add_byte(33+s)
+            frame.add_byte(0x00)
+        except:
+            frame.add_string("   ")
+
         if aprs_alt > 0:
-          cs = log(aprs_alt) / log(1.002) # altitude = 1.002^cs (in feet)
-          frame.add_base91enc(cs, 2)
-          frame.add_byte( 0x38 ) # Compression Type : current fix, NMEA GGA ( pos + alt ), origin = compressed
-        else:
-          frame.add_string("   ")
+            frame.add_string("/A=%06d" % aprs_alt)
+        #   cs = log(aprs_alt) / log(1.002) # altitude = 1.002^cs (in feet)
+        #   frame.add_base91enc(cs, 2)
+        #   frame.add_byte( 0x38 ) # Compression Type : current fix, NMEA GGA ( pos + alt ), origin = compressed
+        # else:
+        #   frame.add_string("   ")
 
         # see http://he.fi/doc/aprs-base91-comment-telemetry.txt
         if telemetry:
