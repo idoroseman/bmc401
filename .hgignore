@@ -46,5 +46,6 @@ syntax: regexp
 .DS_Store
 ._.DS_Store
 data/*
+images/*
 log/*
 .idea/*
