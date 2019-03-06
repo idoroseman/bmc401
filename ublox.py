@@ -4,7 +4,10 @@ import threading
 import time
 import io
 import fcntl
-import smbus
+try:
+    import smbus
+except:
+    pass
 
 verbose = False
 printFix = False
@@ -142,6 +145,7 @@ class Ublox():
                        "fixTime": "000000", "FixType": "?", "SatCount": 0,
                        "accentRate": 0, 'groundSpeed':"?", 'groundCourse':"?"}
 
+    def start(self):
         if self.bit() == 0:
           self.comm_thread = communicationThread(self.nmea_handler, self.ublox_handler)
           self.comm_thread.start()
@@ -150,11 +154,11 @@ class Ublox():
 
     def bit(self):
         rv = 0
-        bus = smbus.SMBus(1)
         try:
-          bus.read_byte(device)
+            bus = smbus.SMBus(1)
+            bus.read_byte(device)
         except:
-          rv |= 0x01
+            rv |= 0x01
         return rv
 
     def stop(self):
@@ -220,6 +224,8 @@ class Ublox():
     def tokenize(self, tokens, titles):
         rv = {}
         for i, k in enumerate(titles):
+            if i>=len(tokens) :
+                break
             rv[k] = tokens[i]
         return rv
 
@@ -311,8 +317,9 @@ class Ublox():
 #########################################################################
 
 if __name__ == "__main__":
-    gps = Ublox()
     printFix = True
+    gps = Ublox()
+    gps.start()
     while True:
         try:
             gps.loop()
@@ -320,6 +327,6 @@ if __name__ == "__main__":
         except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
             gps.stop()
             break
-        except Exception(x):
+        except Exception as x:
             print x
     print "Done."

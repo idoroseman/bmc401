@@ -19,6 +19,7 @@ def main():
     aprs = APRS(config['callsign'], config['ssid'])
     modem = AFSK()
     gps = Ublox()
+    gps.start()
     radio = Dorji(config['pins'])
     radio.init()
     timers = Timers(config['timers'])
