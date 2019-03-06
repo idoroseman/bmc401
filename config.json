@@ -9,8 +9,8 @@
     "BUZZER": 13
   },
   "timers":{
-   "APRS": 1,
-   "APRS-META":2,
+   "APRS": 3,
+   "APRS-META":10,
    "SSTV": 15,
    "BIT":  1
   },

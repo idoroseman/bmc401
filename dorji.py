@@ -47,7 +47,7 @@ class Dorji():
             self.ser.write(data)
             time.sleep(1)
             x=self.ser.readline()
-            print x
+            print x.strip()
             if x.startswith('+') or x.startswith("S="):
                 self.isOK = True
                 break;

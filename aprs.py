@@ -30,12 +30,17 @@ class APRS():
 
         # Course / Speed
         try:
-            c = self.GPSDAT['groundCourse'] / 4
-            s = log(self.GPSDAT['groundSpeed'] - 1) / log( 1.08 )
-            frame.add_byte(33+c)
-            frame.add_byte(33+s)
-            frame.add_byte(0x00)
-        except:
+            course = float(gps['groundCourse'])
+            speed = float(gps['groundSpeed'])
+            c = course / 4
+            if speed > 1:
+              s = log(speed + 1) / log( 1.08 )
+            else:
+              s = 0
+            frame.add_byte(33+int(c))
+            frame.add_byte(33+int(s))
+            frame.add_byte(0x20)
+        except Exception as x:
             frame.add_string("   ")
 
         if aprs_alt > 0:
@@ -96,10 +101,10 @@ if __name__ == "__main__":
                'alt': 129.7,
                'navmode': 'flight',
                'lonDir': 'E',
-               'groundSpeed': '0.082',
+               'groundSpeed': '36.2',
                'lon': 34.87216566666667,
                'SatCount': 4,
-               'groundCourse': '',
+               'groundCourse': '123',
                'lon_raw': '03452.32994',
                'fixTimeStr': '16:30',
                'accentRate': 0.40599678574441816
@@ -110,8 +115,8 @@ if __name__ == "__main__":
              'Pressure':1024,
              'Battery':5 }
     aprs = APRS('4x6ub', 11)
-    #frame = aprs.create_location_msg(gpsdata, "idoroseman.com", telemetry)
-    frame = aprs.create_telem_name_msg(telemetry)
+    frame = aprs.create_location_msg(gpsdata, "idoroseman.com", telemetry)
+    #frame = aprs.create_telem_name_msg(telemetry)
     # print frame.toString()
     modem = AFSK()
     modem.encode(frame.toString())

@@ -180,6 +180,7 @@ class Ublox():
             time.sleep(1)
         elapsed = time.time() - self.lastFixTime
         if elapsed > 2 * 60:
+            self.GPSDAT['SatCount'] = -1
             self.set_status( im_lost )
             self.update_files()
             self.lastFixTime = time.time()
@@ -224,9 +225,14 @@ class Ublox():
     def tokenize(self, tokens, titles):
         rv = {}
         for i, k in enumerate(titles):
+          try:
             if i>=len(tokens) :
                 break
             rv[k] = tokens[i]
+          except Exception as x:
+            print x
+            print i,k
+            print ",".join(tokens)
         return rv
 
     def parse_gnrmc(self, tokens):
