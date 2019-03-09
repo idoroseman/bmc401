@@ -1,4 +1,3 @@
-
 import math
 from binascii import unhexlify
 from PIL import Image
@@ -10,8 +9,7 @@ CHANS   = 1
 VOLPCT  = 20
 MAXSAMPLES = (180 * MAXRATE)
 
-def tohex(val, nbits):
-  return hex((val + (1 << nbits)) % (1 << nbits))
+SSTVImageSize = (320, 256)
 
 class SSTV():
     def __init__(self):
@@ -20,6 +18,8 @@ class SSTV():
     def process(self, image):
 
         self.image = image.convert('RGB')
+        self.image = self.image.resize(SSTVImageSize, Image.ANTIALIAS)
+
 
         temp1 = (float)(1 << (BITS - 1))
         temp2 = VOLPCT / 100.0
@@ -50,12 +50,6 @@ class SSTV():
         self.buildaudio()
         self.addvistrailer()
 
-    def writefile_aiff(self, filename):
-        pass
-
-    def writefile_wav(self, filename):
-        pass
-
     # playtone - - Add waveform info to audio data.New waveform data is
     # added in a phase - continuous manner according to the
     # audio frequency and duration provided.Note that the
@@ -65,26 +59,20 @@ class SSTV():
     # Also, yes, a nod to Tom Hanks.
 
     def playtone(self,  tonefreq,  tonedur ):
-
-        tonesamples = 0
-        voltage = 0
-        deltatheta = 0.0
-
         tonedur += self.g_fudge
-        tonesamples = (tonedur / self.g_uspersample) + 0.5
+        tonesamples = int((tonedur / self.g_uspersample) + 0.5)
         deltatheta = self.g_twopioverrate * tonefreq
 
-        for i in range(int(tonesamples)):
+        for i in range(tonesamples):
             self.g_samples += 1
             if (tonefreq == 0):
                 self.g_audio[self.g_samples] = 32768
             else:
-                voltage = 0 + int(math.sin(self.g_theta) * self.g_scale)
+                voltage = 0 + (int)(math.sin(self.g_theta) * self.g_scale)
+                self.g_audio[self.g_samples] = voltage
+                self.g_theta += deltatheta
 
-            self.g_audio[self.g_samples] = voltage
-            self.g_theta += deltatheta
-
-        g_fudge = tonedur - ( tonesamples * self.g_uspersample )
+        self.g_fudge = tonedur - ( tonesamples * self.g_uspersample )
 
     # addvisheader - - Add the specific audio tones that make up the
     # Martin 1 VIS header to the audio data.Basically,
@@ -171,12 +159,13 @@ class SSTV():
         b = [0] * 320
 
         print( "Adding image to audio data." )
-        for y in range(256):
-	    print "\rline %s of %s..." % (y, 256),
+        pixels, lines = SSTVImageSize
+        for y in range(lines):
+
             # printf( "Row [%d] Sample [%d].\n" , y , g_samples ) ;
 
             # read image data
-            for x in range(320):
+            for x in range(pixels):
                 r[x], g[x], b[x] = self.image.getpixel((x, y))
 
             # add row markers to audio
@@ -198,7 +187,7 @@ class SSTV():
             self.playtone( 1500 , 572 )             # separator tone
 
             # red channel
-            for v in b:
+            for v in r:
                 self.playtone( self.toneval( v ), 457.6 )
 
             self.playtone( 1500 , 572 )
@@ -228,19 +217,21 @@ class SSTV():
         rv += list(unhexlify("%04x" % 1))[::-1]     # format = 1 (PCM) (LE)
         rv += list(unhexlify("%04x" % 1))[::-1]     # channels = 1 (LE)
 
+
         rv += list(unhexlify("%08x" % self.g_rate))[::-1]  # samples / channel / sec (LE!!)
-        rv += list(unhexlify("%08x" % self.g_rate))[::-1]     # bytes total / sec (LE!!)
+        rv += list(unhexlify("%08x" % byterate))[::-1]     # bytes total / sec (LE!!)
         rv += list(unhexlify("%04x" % blockalign))[::-1]   # block alignment (LE!!)
         rv += list(unhexlify("%04x" % BITS))[::-1]         # bits/sample (LE)
 
         # sub chunk 2
+
         rv += ['d', 'a', 't', 'a']                       # header
         rv += list(unhexlify("%08x" % audiosize))[::-1]  # audio bytes total (LE!!)
 
         # FINALLY, the audio data itself (LE!!)
         for  i in range(self.g_samples):
-          v = self.g_audio[i]
-          rv += [ (v & 0xff), ((v >> 8) & 0xff)]
+            v = self.g_audio[i]
+            rv += [(v & 0xff), ((v >> 8) & 0xff)]
 
         with open(filename, "wb") as fout:
             fout.write(bytearray(rv))
@@ -249,7 +240,7 @@ class SSTV():
         print( "Done writing to audio file." )
 
 if __name__ == "__main__":
-    im = Image.open('images/testcard.jpg')
+    im = Image.open('images/TestCard.jpg')
     sstv = SSTV()
     sstv.process(im)
     sstv.writefile_wav('data/sstv.wav')
