@@ -66,7 +66,7 @@ class AFSK():
         else:
             message_count = 1
             Messages = [Messages]
-        total_message_length = sum([len(x) for x in Messages])
+        total_message_length = sum([len(x.toString()) for x in Messages])
 
         # Calculate size of file
         total_cycles = (self.cycles_per_byte * total_message_length) + (self.cycles_per_byte * (flags_before + flags_after) * message_count) + ((preamble_length + postamble_length) * self.cycles_per_bit * message_count)
@@ -78,17 +78,18 @@ class AFSK():
         self.buffer += header
 
         for j in range(message_count):
-            message_length = len(Messages[j])
+            msg = Messages[j].toString()
+            message_length = len(msg)
             # Write preamble
             for i in range(preamble_length):
-		self.make_and_write_freq(0)
+		        self.make_and_write_freq(0)
 
             for i in range(flags_before):
                 self.make_and_write_byte( 0x7E, 0) #######
 
             # Create and write actual data
             for i in range(message_length):
-                self.make_and_write_byte( Messages[j][i], 1)
+                self.make_and_write_byte( msg[i], 1)
 
             for i in range(flags_after):
                 self.make_and_write_byte( 0x7E, 0)
@@ -96,8 +97,9 @@ class AFSK():
             # Write postamble
             for i in range(postamble_length):
                 self.make_and_write_freq(0)
-	for i in range(10):
-	    self.buffer += [0, 0, 0, 0]
+        for i in range(10):
+            self.buffer += [0, 0, 0, 0]
+
     # Makes 44 - byte header for 8 - bit WAV in memory
     # usage: wavhdr(pointer, sampleRate, dataLength)
     def wavhdr(self, dlen):

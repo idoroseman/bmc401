@@ -1,4 +1,5 @@
-from aprs import aprs
+from aprs import APRS
+from base91 import encode, decode
 
 # see http://tt7hab.blogspot.co.il/2017/03/ssdv-slow-scan-digital-video.html
 
@@ -102,13 +103,17 @@ def encode_ssdv(self):
             return
 
 
-class ssdv():
+class SSDV():
+    def __init__(self, callsign, ssid):
+        self.callsign = callsign
+        self.ssid = ssid
+
     def base91_len(self, l):
         return (l*16 + 26)/13
 
     def base91_encode(self,data):
         olen =  self.base91_len(len(data))
-        out = ['\0'] * ((len(data)*4 / 3) +10)
+        out = ['\0'] * ((len(data)*4 / 3) + 3)
         while len(data) % 3 != 0:
             data += '\0'
         i = 0
@@ -133,17 +138,58 @@ class ssdv():
     def transmitOnRadio(self, msg):
         print msg.toString()
 
-    def send(self):
-        with open("/Users/ido/Projects/ssdv/output.bin", "rb") as f:
-            a = aprs('4x6ub',13)
+    def prepare(self,filename):
+        # 0	Sync Byte	1	0x55
+        # 1	Packet Type	1	0x66 Normal mode, 0x67 No-FEC mode.
+        # 2	Callsign	4	Base-40 encoded. Up to 6 characters.
+        # 6	Image ID	1	Incremented by 1 for each new image.
+        # 7	Packet ID	2	The packet number within the image.
+        # 9	    Width	1	Width of the image in MCU blocks (pixels / 16).
+        # 10	Height	1	Height of the image in MCU blocks (pixels / 16).
+        # 11	Flags	1	[7:6] reserved, [5:3] JPEG quality, [2] EOI flag, [1:0] subsampling
+        # 12	MCU Offset	1	Offset (bytes) to the beginning of the first MCU block in payload.
+        # 13	MCU Index	2	The number of the MCU pointed to by the offset above.
+        # 15	Payload	    205	Payload data.
+        # 220	Checksum	4	32-bit CRC.
+        # 224	FEC	32	Reed-Solomon forward error correction data.
+        rv = []
+        raw = []
+        with open(filename, "rb") as f:
+            aprs = APRS(self.callsign, self.ssid)
             while True:
                 frame = f.read(256)
                 if frame == '':
                     break
+                # Sync byte, CRC and FEC of SSDV not transmitted
+                # payload is 205 bytes, so I frame gets 103 bytes, J gets 102 bytes and a \0
+                header = frame [6: 15]
+                dataI = frame[15:15+103]
+                dataJ = frame[15+103:15+205] + '\0'
+                dataK = ''.join([chr(ord(dataI[i]) ^ ord(dataJ[i])) for i in range(len(dataI))])
+                pkt_base91 = encode(header+dataI)
+                msg = aprs.create_ssdv_msg('I', pkt_base91)
+                raw.append("{{I"+pkt_base91)
+                rv.append(msg)
+                pkt_base91 = encode(header+dataJ)
+                msg = aprs.create_ssdv_msg('J', pkt_base91)
+                raw.append("{{J"+pkt_base91)
+                rv.append(msg)
+                pkt_base91 = encode(header+dataK)
+                msg = aprs.create_ssdv_msg('K', pkt_base91)
+                raw.append("{{K"+pkt_base91)
+                rv.append(msg)
 
-                pkt_base91 = self.base91_encode(frame[6:220])  # Sync byte, CRC and FEC of SSDV not transmitted
-                msg = a.create_ssdv_msg( pkt_base91)
-                self.transmitOnRadio(msg)
+        return rv, raw
 
-
+if __name__ == "__main__":
+    from modem import AFSK
+    ssdv = SSDV('4x6ub', 11)
+    modem = AFSK()
+    packets, raw = ssdv.prepare("data/test.ssdv")
+    modem.encode(packets)
+    modem.saveToFile('data/ssdv.wav')
+    with open('data/ssdv.packets', "wb") as f:
+        for p in raw:
+            f.write(bytearray(p+'\n'))
+    print len(packets),"packets"
 
