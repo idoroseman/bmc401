@@ -3,6 +3,12 @@ import requests
 import datetime
 import base64
 import binascii
+from aprsis import APRSISClient
+
+# code based on work by
+#   https://github.com/DL7AD/pecanpico9/blob/3008ff27fe6a80bf22438779077a0475d33bd389/decoder/decoder.py
+#   https://github.com/fsphil/ssdv
+#   http://www.aprs-is.net/connecting.aspx
 
 # Offset	Name	Size	Description
 # 0	    Sync Byte	    1	0x55 - May be preceded by one or more sync bytes
@@ -51,7 +57,24 @@ class aprs2ssdv():
         r = requests.post(self.ssdv_url, json=packet_dict)
         print r,r.text
 
-    def process(self, line):
+    def process_aprs(self, msg):
+        # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{KAAJt7FN/C"Kb^{/!R=^:POi#r4J_;x-"RsP68s%/xuXwLt{[p*b}S?bYy4Wu-u/4<h&QOTzP(NY3q`?ubP]KT3RPo%wi2SF)$W$Cb,X_j;awulms{iIap(~;;;HWK^Fw]VM*ntFFxE
+        # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{IAANt7F5FuWKA,os%rHvWZn[sY30`:J5&#E1enIE&K_^,q8b{-!Wl[${G,uR5WsaYpz;s+]xUA,FW0^tdO{(Gx-!bxwFL-/NX$wZZurY*.xuc0D<?e}/:&Hs~x9}l&=/~K}&?<3}:ZE
+        # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{JAANt7F5FuWJ^levb2Y0?6`<7qSxX1S2~b{;u2<RlXn"[%hR{mKPWg{1D3U.W.~d2Yll(Am+oG9esBbI7"a>Q[sY3Do:gY-P}k/#0d{87oi#V{FpqoOZY5%j)KaW_+rq~;64-c+/3FA
+        if msg == u'':
+            return
+        if msg.startswith("#"):
+            print msg
+            return
+        header, payload = msg.split(":", 1)
+        tokens = header.split(',')
+        src, dest = tokens[0].split(">")
+        if dest == 'APE6UB' :
+            print payload
+            if payload.startswith("{{"):
+              self.process_line(payload)
+
+    def process_line(self, line):
         data = decode(line[3:])
         packet_type = line[2]
         image_id = data[0]
@@ -61,7 +84,8 @@ class aprs2ssdv():
         flags = data[5]
         mcu_offset = data[6]
         mcu_index = data[7] * 0x100 + data[8]
-        hash = "%4s%2s" % (image_id, packet_id)
+        print "got packet %4s %4s %s" % ( image_id, packet_id, packet_type)
+        hash = "%04s%02s" % (image_id, packet_id)
         if hash not in self.packets:
             self.packets[hash] = {}
         if hash not in self.headers:
@@ -87,14 +111,16 @@ class aprs2ssdv():
 
 if __name__ == "__main__":
     a2s = aprs2ssdv('4x6ub')
-    cnt = 0
-    with open('data/ssdv.packets') as fin:
-        while True:
-            line = fin.readline()
-            if line=="":
-                break
-            cnt += 1
-            # emulate droped packets
-            if cnt % 5 == 0:
-                continue
-            a2s.process(line)
+    client = APRSISClient(callsign="4X6UB")
+    client.onReceive = a2s.process_aprs
+    client.start()
+    print "started"
+    while True:
+        try:
+            pass
+        except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
+            break
+    client.stop()
+    print "done"
+
+
