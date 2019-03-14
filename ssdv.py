@@ -183,13 +183,23 @@ class SSDV():
 
 if __name__ == "__main__":
     from modem import AFSK
+    from camera import Camera
+    import subprocess
+
     ssdv = SSDV('4x6ub', 11)
     modem = AFSK()
-    packets, raw = ssdv.prepare("data/test.ssdv")
+    cam = Camera()
+    cam.capture()
+    cam.resize((320,256))
+    cam.writeToFile('ssdv')
+    cmd = 'utils/ssdv/ssdv -e /home/pi/bmc401/images/ssdv.jpg /home/pi/bmc401/data/image.ssdv'
+    out = subprocess.check_output(cmd, shell=True)
+    print(out)
+    packets, raw = ssdv.prepare("data/image.ssdv")
     modem.encode(packets)
     modem.saveToFile('data/ssdv.wav')
-    with open('data/ssdv.packets', "wb") as f:
-        for p in raw:
-            f.write(bytearray(p+'\n'))
+    # with open('data/ssdv.packets', "wb") as f:
+    #     for p in raw:
+    #         f.write(bytearray(p+'\n'))
     print len(packets),"packets"
 

@@ -120,6 +120,6 @@ if __name__ == "__main__":
     #frame = aprs.create_telem_name_msg(telemetry)
     # print frame.toString()
     modem = AFSK()
-    modem.encode(frame.toString())
+    modem.encode(frame)
     modem.saveToFile('data/aprs.wav')
 
