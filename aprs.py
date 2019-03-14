@@ -8,6 +8,7 @@ class APRS():
         self.symbol = symbol
         self.sequence_counter = 0
         self.dest = "APE6UB"  # was "APRS"
+
     def create_frame(self):
         return ax25(self.callsign, self.ssid, self.dest, 0, "WIDE1", 1, "WIDE2", 1)
 
