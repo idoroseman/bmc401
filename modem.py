@@ -1,4 +1,5 @@
 from binascii import unhexlify
+import time
 
 _sine_table = [
 0x80,0x81,0x83,0x84,0x86,0x87,0x89,0x8A,0x8C,0x8D,0x8F,0x91,0x92,0x94,0x95,0x97,
@@ -36,10 +37,6 @@ _sine_table = [
 ]
 
 class AFSK():
-    bc = 0
-    High = 0
-    phase = 0
-    APRS_Preemphasis = 0
 
     def __init__(self, sample_rate = 48000, baud = 1200, lfreq = 1200, hfreq = 2200):
         self.sample_rate = sample_rate
@@ -48,10 +45,20 @@ class AFSK():
         self.hfreq = hfreq
         self.cycles_per_bit = self.sample_rate / self.baud
         self.cycles_per_byte = self.cycles_per_bit * 8
+        self.bit_count = 0
+        self.isHigh = False
+        self.APRS_Preemphasis = False
+        self.bits = []
         self.buffer = []
 
     def saveToFile(self, filename):
         with open(filename, "wb") as f:
+            # Make header
+            total_cycles = len(self.buffer)
+            header = self.wavhdr(total_cycles)  # *2 + 10 is new
+            # Write wav header
+            f.write(''.join(header))
+            # write data
             f.write(bytearray(self.buffer))
         self.buffer = []
 
@@ -60,6 +67,7 @@ class AFSK():
         postamble_length = 64
         flags_before = 32
         flags_after = 32
+        start_time = time.time()
 
         if isinstance(Messages, list):
             message_count = len(Messages)
@@ -71,34 +79,30 @@ class AFSK():
         # Calculate size of file
         total_cycles = (self.cycles_per_byte * total_message_length) + (self.cycles_per_byte * (flags_before + flags_after) * message_count) + ((preamble_length + postamble_length) * self.cycles_per_bit * message_count)
 
-        # Make header
-        header = self.wavhdr(total_cycles * 2 + 10)  # *2 + 10 is new
-        # Write wav header
-        #f.write(''.join(header)
-        self.buffer += header
-
         for j in range(message_count):
             msg = Messages[j].toString()
             message_length = len(msg)
             # Write preamble
             for i in range(preamble_length):
-		        self.make_and_write_freq(0)
+                self.bits += [0]
 
             for i in range(flags_before):
-                self.make_and_write_byte( 0x7E, 0) #######
+                self.write_byte(0x7E, 0) #######
 
             # Create and write actual data
             for i in range(message_length):
-                self.make_and_write_byte( msg[i], 1)
+                self.write_byte(msg[i], 1)
 
             for i in range(flags_after):
-                self.make_and_write_byte( 0x7E, 0)
+                self.write_byte(0x7E, 0)
 
             # Write postamble
             for i in range(postamble_length):
-                self.make_and_write_freq(0)
-        for i in range(10):
-            self.buffer += [0, 0, 0, 0]
+                self.bits += [0]
+
+        self.make_frequencies()
+        end_time = time.time()
+        print "encoding took %s seconds" % (end_time-start_time)
 
     # Makes 44 - byte header for 8 - bit WAV in memory
     # usage: wavhdr(pointer, sampleRate, dataLength)
@@ -120,48 +124,50 @@ class AFSK():
         return rv
 
 
-    def make_and_write_freq(self, High):
-        # write 1 bit, which will be several values from the sine wave table
-        if High:
-            step = (512 * self.hfreq << 7) / (self.cycles_per_bit * self.baud)
-        else:
-            step = (512 * self.lfreq << 7) / (self.cycles_per_bit * self.baud)
+    def make_frequencies(self):
+        steps = [(512 * self.lfreq << 7) / (self.cycles_per_bit * self.baud),
+                 (512 * self.hfreq << 7) / (self.cycles_per_bit * self.baud)]
+        buffer = [0, 0] * (len(self.bits) * self.cycles_per_bit)
+        index = 0
+        phase = 0
 
-        for i in range(self.cycles_per_bit):
-            # fwrite( & (_sine_table[(phase >> 7) & 0x1FF]), 1, 1, f);
-            v = _sine_table[(self.phase >> 7) & 0x1FF] * 0x80 - 0x4000
-            if High and self.APRS_Preemphasis:
-                v *= 0.65
-            else:
-                v *= 1.3
+        for bit in self.bits:
+            step = steps[bit]
+            for i in range(self.cycles_per_bit):
+                v = _sine_table[(phase >> 7) & 0x1FF] * 0x80 - 0x4000
+                if bit and self.APRS_Preemphasis:
+                    v *= 0.65
+                else:
+                    v *= 1.3
 
-            # int16_t v = _sine_table[(phase >> 7) & 0x1FF] * 0x100 - 0x8000;
-            v = int(v)
-            self.buffer += [ (v & 0xff),((v >> 8) & 0xff)]
-            self.phase += step
+                v = int(v)
+                buffer[index] = (v & 0xff)
+                buffer[index+1] = ((v >> 8) & 0xff)
+                phase += step
+                index += 2
+        self.buffer = buffer
 
-    def make_and_write_bit(self, Bit, BitStuffing):
+    def write_bit(self, Bit, BitStuffing):
         if (BitStuffing):
-            if (self.bc >= 5):
-                self.High = not self.High
-                self.make_and_write_freq(self.High)
-                self.bc = 0
-
+            if (self.bit_count >= 5):
+                self.isHigh = not self.isHigh
+                self.bits += [self.isHigh]
+                self.bit_count = 0
         else:
-            self.bc = 0
+            self.bit_count = 0
 
         if Bit:
             # Stay with same frequency, but only for a max of 5 in a row
-            self.bc += 1
+            self.bit_count += 1
         else:
             # 0 means swap frequency
-            self.High = not self.High
-            self.bc = 0
-        self.make_and_write_freq( self.High)
+            self.isHigh = not self.isHigh
+            self.bit_count = 0
+        self.bits += [self.isHigh]
 
-    def make_and_write_byte(self, Character, BitStuffing):
+    def write_byte(self, Character, BitStuffing):
         if isinstance(Character, str):
             Character = ord(Character)
         for i in range(8):
-            self.make_and_write_bit( Character & 1, BitStuffing)
+            self.write_bit(Character & 1, BitStuffing)
             Character >>= 1
