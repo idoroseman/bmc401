@@ -1,6 +1,7 @@
 syntax: glob
 
 *.py[cdo]
+*.orig
 
 # Translations
 *.mo

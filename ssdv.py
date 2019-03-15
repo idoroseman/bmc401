@@ -191,8 +191,13 @@ if __name__ == "__main__":
     cam = Camera()
     cam.capture()
     cam.resize((320,256))
-    cam.writeToFile('ssdv')
-    cmd = 'utils/ssdv/ssdv -e /home/pi/bmc401/images/ssdv.jpg /home/pi/bmc401/data/image.ssdv'
+    gpsdata = {'lat': 32.063331,
+               'lon': 34.87216566666667,
+               'alt': 129.7
+               }
+    cam.overlay('4x6ub', gpsdata)
+    cam.saveToFile('ssdv')
+    cmd = 'utils/ssdv/ssdv -e -i 1 /home/pi/bmc401/images/ssdv.jpg /home/pi/bmc401/data/image.ssdv'
     out = subprocess.check_output(cmd, shell=True)
     print(out)
     packets, raw = ssdv.prepare("data/image.ssdv")
