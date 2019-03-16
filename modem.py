@@ -8,14 +8,16 @@ class AFSK():
         self.baud = baud
         self.freqs = [lfreq, hfreq]
         self.bit_durration = 1000000 / self.baud
-        self.wav = WaveFile(sample_rate)
-        self.saveToFile = self.wav.saveToFile
 
+    def saveToFile(self, filename):
+        self.wav.saveToFile(filename)
+
+
+    def encode(self, Messages):
+        self.wav = WaveFile(self.sample_rate)
         self.bit_count = 0
         self.isHigh = False
         self.bits = []
-
-    def encode(self, Messages):
         preamble_length = 128
         postamble_length = 64
         flags_before = 32
@@ -56,7 +58,7 @@ class AFSK():
             self.wav.playtone(self.freqs[bit], self.bit_durration)
 
         end_time = time.time()
-        print "encoding took %s seconds" % (end_time-start_time)
+        print "encoding %s messages took %s seconds" % (message_count, end_time-start_time)
 
     def write_bit(self, Bit, BitStuffing):
         if (BitStuffing):

@@ -27,7 +27,7 @@ class ax25():
             self.frame += v[0]
 
     def add_string(self, s):
-        self.frame += s
+        self.frame += str(s)
 
     def add_base91enc(self, value, length):
         rv = ''

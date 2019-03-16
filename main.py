@@ -57,8 +57,10 @@ def main():
 
         if timers.expired("APRS"):
             if gpsdata['status'] == "fix":
+		print "sending location"
                 frame = aprs.create_location_msg(gpsdata, telemetry)
             else:
+                print "sending only telemetrt"
                 frame = aprs.create_telem_data_msg(telemetry, status_bits)
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
@@ -69,7 +71,7 @@ def main():
 
         if timers.expired("APRS-META"):
             frame = aprs.create_telem_name_msg(telemetry)
-            modem.encode(frame.toString())
+            modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
             radio.freq(config['frequencies']['APRS'])
             radio.tx()
@@ -84,7 +86,7 @@ def main():
             sstv.image = cam.image
             sstv.process()
             end_time = time.time()
-            sstv.saveToFile('data/sstv.wav')
+            sstv.saveToFile(os.path.join(tmp_dir, 'sstv.wav'))
             radio.freq(config['frequencies']['SSTV'])
             radio.tx()
             os.system("aplay " + os.path.join(tmp_dir, 'sstv.wav'))
@@ -95,11 +97,11 @@ def main():
             cam.archive()
             cam.resize((320, 256))
             cam.overlay(config['callsign'], gpsdata, sensordata)
-            cam.saveToFile('ssdv')
-            ssdv.convert('images/ssdv.jpg', 'data/image.ssdv')
-            packets, raw = ssdv.prepare("data/image.ssdv")
+            cam.saveToFile(os.path.join(tmp_dir,'ssdv.jpg'))
+            ssdv.convert('tmp/ssdv.jpg', 'tmp/image.ssdv')
+            packets, raw = ssdv.prepare(os.path.join(tmp_dir, "image.ssdv"))
             modem.encode(packets)
-            modem.saveToFile('data/ssdv.wav')
+            modem.saveToFile(os.path.join(tmp_dir, 'ssdv.wav'))
             radio.freq(config['frequencies']['APRS'])
             radio.tx()
             os.system("aplay " + os.path.join(tmp_dir, 'ssdv.wav'))

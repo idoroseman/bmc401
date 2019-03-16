@@ -112,6 +112,7 @@ class SSDV():
 
     def convert(self, src, dest):
         self.counter += 1
+        print "convert \#%s" % self.counter
         cmd = 'utils/ssdv/ssdv -e -i %s /home/pi/bmc401/%s /home/pi/bmc401/%s' % (self.counter, src, dest)
         out = subprocess.check_output(cmd, shell=True)
         print(out)
@@ -176,12 +177,14 @@ if __name__ == "__main__":
                'lon': 34.87216566666667,
                'alt': 129.7
                }
-    cam.overlay('4x6ub', gpsdata)
-    cam.saveToFile('ssdv')
-    ssdv.convert('images/ssdv.jpg', 'data/image.ssdv')
-    packets, raw = ssdv.prepare("data/image.ssdv")
+    sensordata = {'outside_temp': -12
+		}
+    cam.overlay('4x6ub', gpsdata, sensordata)
+    cam.saveToFile('tmp/ssdv.jpg')
+    ssdv.convert('tmp/ssdv.jpg', 'tmp/image.ssdv')
+    packets, raw = ssdv.prepare("tmp/image.ssdv")
     modem.encode(packets)
-    modem.saveToFile('data/ssdv.wav')
+    modem.saveToFile('tmp/ssdv.wav')
     # with open('data/ssdv.packets', "wb") as f:
     #     for p in raw:
     #         f.write(bytearray(p+'\n'))

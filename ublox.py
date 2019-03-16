@@ -293,20 +293,24 @@ class Ublox():
                 print("fix:  %s" % line)
             if self.parse_gngga(tokens):
                 self.set_status(im_good)
-            now = time.time()
-            delta_time = now - self.lastAltTime
-            if self.lastAltTime == 0:
-                self.lastAltTime = now
-                self.prev_alt = float(self.GPSDAT["alt"])
-                self.GPSDAT['accentRate'] = 0
-            elif delta_time > 10:
-                delta_alt = float(self.GPSDAT["alt"]) - self.prev_alt
-                accent = delta_alt / delta_time
-                if verbose:
-                    print("%s m / %s sec = %s" % (delta_alt, delta_time, accent))
-                self.GPSDAT["accentRate"] = 0.7 * self.GPSDAT["accentRate"] + 0.3 * accent
-                self.lastAltTime = now
-                self.update_files()
+            try:
+                alt = float(self.GPSDAT["alt"])
+                now = time.time()
+                delta_time = now - self.lastAltTime
+                if self.lastAltTime == 0:
+                    self.lastAltTime = now
+                    self.prev_alt = alt
+                    self.GPSDAT['accentRate'] = 0
+                elif delta_time > 10:
+                    delta_alt = float(self.GPSDAT["alt"]) - float(self.prev_alt)
+                    accent = delta_alt / delta_time
+                    if verbose:
+                        print("%s m / %s sec = %s" % (delta_alt, delta_time, accent))
+                    self.GPSDAT["accentRate"] = 0.7 * self.GPSDAT["accentRate"] + 0.3 * accent
+                    self.lastAltTime = now
+                    self.update_files()
+            except:
+                pass
         elif cmnd == "GNGSA":
             if verbose:
                 print("stts: %s" % line)

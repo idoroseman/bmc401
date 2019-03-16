@@ -8,7 +8,8 @@ class Timers():
     def expired(self, id):
         now = time.time()
         if id not in self.timeouts:
-            raise Exception("item %s not in timers list" % id)
+            #raise Exception("item %s not in timers list" % id)
+            pass
         elif id not in self.timestamps:
             self.timestamps[id] = now
             return False

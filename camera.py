@@ -11,10 +11,10 @@ class Camera():
         # Create the in-memory stream
         self.stream = BytesIO()
         self.camera = PiCamera()
-        self.camera.awb_mode = 'sunlight'
+        self.camera.awb_mode = 'auto' # 'sunlight'
         time.sleep(2)
         self.basepath = path
-        self.logo = Image.open("logo.png").convert("RGBA")
+        self.logo = Image.open("data/logo.png").convert("RGBA")
         self.mask = self.logo.copy()
         self.logo.putalpha(150)
 
@@ -25,7 +25,8 @@ class Camera():
         self.image = Image.open(self.stream).convert("RGBA")
 
     def archive(self):
-        self.saveToFile(datetime.datetime.datetime.now().strftime("%Y-%m-%d %H%M"))
+        filename = datetime.datetime.now().strftime("%Y-%m-%d %H%M")
+        self.image.save(os.path.join(self.basepath, filename + ".jpg"), "JPEG")
 
     def resize(self, newSize):
         self.image = self.image.resize(newSize, Image.ANTIALIAS)
@@ -55,7 +56,7 @@ class Camera():
         self.image = Image.alpha_composite(self.image, layer)
 
     def saveToFile(self, filename):
-        self.image.save(os.path.join(self.basepath, filename + ".jpg"), "JPEG")
+        self.image.save(filename, "JPEG")
 
     def loadFromFile(self, filename):
         self.image = Image.open(filename)

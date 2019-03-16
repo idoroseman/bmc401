@@ -9,9 +9,9 @@
     "BUZZER": 13
   },
   "timers":{
-   "APRS": 3,
+   "APRS": 4,
    "APRS-META":10,
-   "SSDV": 7,
+   "SSDV": 15,
    "BIT":  1
   },
   "frequencies":{

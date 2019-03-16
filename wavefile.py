@@ -6,7 +6,7 @@ MAXRATE = 22050
 BITS = 16
 CHANS = 1
 VOLPCT = 20
-MAXSAMPLES = (180 * MAXRATE)
+MAXSAMPLES = (300 * MAXRATE)
 
 class WaveFile():
     def __init__(self, rate=11025, bits=16):
