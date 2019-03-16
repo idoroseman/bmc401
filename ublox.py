@@ -13,6 +13,9 @@ verbose = False
 printFix = False
 im_lost = "lost"
 im_good = "fix"
+no_comm = "comm error"
+no_i2c  = "i2c error"
+
 setNavCmnd = [0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 0x06,
               0x03, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00,
               0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C,
@@ -138,6 +141,7 @@ class Ublox():
         self.isInFlightMode = False
 
         self.lastFixTime = time.time()
+        self.lastCommTime = time.time()
         self.lastAltTime = 0
         self.prev_alt = 0.0
         self.GPSDAT = {"status": "init", "navmode": "unknown",
@@ -153,13 +157,12 @@ class Ublox():
           raise Exception("GPS not connected")
 
     def bit(self):
-        rv = 0
         try:
             bus = smbus.SMBus(1)
             bus.read_byte(device)
         except:
-            rv |= 0x01
-        return rv
+            return True
+        return False
 
     def stop(self):
         self.exitFlag = True
@@ -177,13 +180,18 @@ class Ublox():
         if not self.isInFlightMode:
             print("set flight mode !")
             self.comm_thread.send_bytes(setNavCmnd)
-            time.sleep(1)
+            time.sleep(5)
         elapsed = time.time() - self.lastFixTime
         if elapsed > 2 * 60:
             self.GPSDAT['SatCount'] = -1
             self.set_status( im_lost )
             self.update_files()
             self.lastFixTime = time.time()
+            # check for hardware failure
+            if time.time() - self.lastCommTime > 5 * 60:
+                self.set_status( no_comm )
+            if self.bit():
+                self.set_status( no_i2c )
 
     def update_files(self, filename="gps"):
         try:
@@ -220,7 +228,7 @@ class Ublox():
           print("ground course %s" % self.GPSDAT['groundCourse'])
           print("ground speed %s" % self.GPSDAT['groundSpeed'])
           print
-        lastFixTime = time.time()
+        self.lastFixTime = time.time()
 
     def tokenize(self, tokens, titles):
         rv = {}
@@ -269,6 +277,7 @@ class Ublox():
         return True
 
     def nmea_handler(self, line):
+        self.lastCommTime = time.time()
         tokens = line.split(',')
         cmnd = tokens[0][1:]
         if cmnd == "GNTXT":
@@ -281,7 +290,7 @@ class Ublox():
             self.update_files()
         elif cmnd == "GNGGA":
             if verbose:
-		print("fix:  %s" % line)
+                print("fix:  %s" % line)
             if self.parse_gngga(tokens):
                 self.set_status(im_good)
             now = time.time()
@@ -300,7 +309,7 @@ class Ublox():
                 self.update_files()
         elif cmnd == "GNGSA":
             if verbose:
-		print("stts: %s" % line)
+                print("stts: %s" % line)
             self.parse_gngsa(tokens)
         else:
             if verbose:

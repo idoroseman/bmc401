@@ -10,6 +10,13 @@ class Sensors():
         self.w1_device_folder = glob.glob(self.w1_base_dir + '28*')[0]
         self.w1_device_file = self.w1_device_folder + '/w1_slave'
 
+    def get_data(self):
+        return {
+            'outside_temp': self.read_outside_temp(),
+            'inside_temp': 0,
+            'barometer' : 0
+        }
+
     def read_temp_raw(self):
         f = open(self.w1_device_file, 'r')
         lines = f.readlines()

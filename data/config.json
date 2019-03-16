@@ -11,11 +11,12 @@
   "timers":{
    "APRS": 3,
    "APRS-META":10,
-   "SSTV": 15,
+   "SSDV": 7,
    "BIT":  1
   },
   "frequencies":{
-   "APRS":144.800
+    "APRS": 144.800,
+    "SSTV": 144.500
   }
 }
 

@@ -57,7 +57,7 @@ class WaveFile():
 
         self.g_fudge = tonedur - (tonesamples * self.g_uspersample)
 
-    def writefile(self, filename):
+    def saveToFile(self, filename):
 
         audiosize = self.g_samples * CHANS * (BITS / 8)  # bytes of audio
         totalsize = 4 + (8 + 16) + (8 + audiosize)  # audio + some headers

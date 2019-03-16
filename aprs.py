@@ -2,17 +2,20 @@ from ax25 import ax25
 from math import log
 
 class APRS():
-    def __init__(self, callsign, ssid=11, symbol='O'):
+    def __init__(self, callsign, ssid=11, comment='', symbol='O'):
         self.callsign = callsign.upper()
         self.ssid = ssid
         self.symbol = symbol
+        self.comment = comment
         self.sequence_counter = 0
         self.dest = "APE6UB"  # was "APRS"
 
     def create_frame(self):
         return ax25(self.callsign, self.ssid, self.dest, 0, "WIDE1", 1, "WIDE2", 1)
 
-    def create_location_msg(self, gps , comment, telemetry=None ):
+    def create_location_msg(self, gps , telemetry=None, comment=None ):
+        if comment==None:
+            comment=self.comment
         # see Chapter 9: Compressed Position Report Data Formats
         # Convert the min.dec coordinates to APRS compressed format
         aprs_lat = 900000000 - gps['lat'] * 10000000
@@ -63,11 +66,26 @@ class APRS():
         frame.add_string(comment)
         return frame
 
+    def create_telem_data_msg(self, telemetry, status='00000000', comment=None):
+        if comment==None:
+            comment=self.comment
+        frame = self.create_frame()
+        frame.add_byte('T')
+        frame.add_byte('#')
+        self.sequence_counter = (self.sequence_counter + 1) & 0x1FFF
+        frame.add_byte(',')
+        for i in telemetry:
+            frame.add_string(telemetry[i])
+            frame.add_byte(',')
+        frame.add_string(status)
+        frame.add_string(comment)
+        return frame
+
     def create_telem_name_msg(self, telemetry):
         frame = self.create_frame()
         frame.add_byte(":")
         me = self.callsign + '-' + str(self.ssid)
-	me = me.encode("ascii")
+        me = me.encode("ascii")
         frame.add_string(me.ljust(9))
         frame.add_byte(":")
         frame.add_string("PARM.")

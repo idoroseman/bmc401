@@ -1,5 +1,6 @@
 from aprs import APRS
 from base91 import encode, decode
+import subprocess
 
 # see http://tt7hab.blogspot.co.il/2017/03/ssdv-slow-scan-digital-video.html
 
@@ -107,36 +108,13 @@ class SSDV():
     def __init__(self, callsign, ssid):
         self.callsign = callsign
         self.ssid = ssid
+        self.counter = 0
 
-    def base91_len(self, l):
-        return (l*16 + 26)/13
-
-    def base91_encode(self,data):
-        olen =  self.base91_len(len(data))
-        out = ['\0'] * ((len(data)*4 / 3) + 3)
-        while len(data) % 3 != 0:
-            data += '\0'
-        i = 0
-        j = 0
-        while i<len(data):
-            octet_a = ord(data[i])
-            octet_b = ord(data[i+1])
-            octet_c = ord(data[i+2])
-            triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c
-            i += 3
-            out[j+0] = b64_table[(triple >> 3 * 6) & 0x3F]
-            out[j+1] = b64_table[(triple >> 2 * 6) & 0x3F]
-            out[j+2] = b64_table[(triple >> 1 * 6) & 0x3F]
-            out[j+3] = b64_table[(triple >> 0 * 6) & 0x3F]
-            j+=4
-
-        b64_mod_table = [ 0, 2, 1 ]
-        for i in range(b64_mod_table[len(data) % 3]):
-           out[self.base01_len(len(data)) - 1 - i] = '='
-        return  ''.join(out)
-
-    def transmitOnRadio(self, msg):
-        print msg.toString()
+    def convert(self, src, dest):
+        self.counter += 1
+        cmd = 'utils/ssdv/ssdv -e -i %s /home/pi/bmc401/%s /home/pi/bmc401/%s' % (self.counter, src, dest)
+        out = subprocess.check_output(cmd, shell=True)
+        print(out)
 
     def prepare(self,filename):
         # 0	Sync Byte	1	0x55
@@ -181,10 +159,13 @@ class SSDV():
 
         return rv, raw
 
+
+
+
+
 if __name__ == "__main__":
     from modem import AFSK
     from camera import Camera
-    import subprocess
 
     ssdv = SSDV('4x6ub', 11)
     modem = AFSK()
@@ -197,9 +178,7 @@ if __name__ == "__main__":
                }
     cam.overlay('4x6ub', gpsdata)
     cam.saveToFile('ssdv')
-    cmd = 'utils/ssdv/ssdv -e -i 1 /home/pi/bmc401/images/ssdv.jpg /home/pi/bmc401/data/image.ssdv'
-    out = subprocess.check_output(cmd, shell=True)
-    print(out)
+    ssdv.convert('images/ssdv.jpg', 'data/image.ssdv')
     packets, raw = ssdv.prepare("data/image.ssdv")
     modem.encode(packets)
     modem.saveToFile('data/ssdv.wav')

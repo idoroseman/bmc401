@@ -2,17 +2,19 @@ from PIL import Image
 import time
 from wavefile import WaveFile
 
+SSTVImageSize = (320,256)
+
 class SSTV():
     def __init__(self):
-        pass
+        self.image = None
 
-    def process(self, image):
-
-        self.image = image.convert('RGB')
+    def process(self):
+        self.image = self.image.convert('RGB')
         self.image = self.image.resize(SSTVImageSize, Image.ANTIALIAS)
         self.wav = WaveFile()
         self.wav.info()
         self.playtone = self.wav.playtone
+        self.saveToFile = self.wav.saveToFile()
 
         self.addvisheader()
         self.buildaudio()
@@ -139,14 +141,16 @@ class SSTV():
 
         print("Done adding image to audio data.")
 
+    def loadFromFile(self, filename):
+        self.image = Image.open(filename)
 
 
 
 if __name__ == "__main__":
-    im = Image.open('images/TestCard.jpg')
     sstv = SSTV()
+    sstv.image = im = sstv.loadFromFile('images/TestCard.jpg')
     start_time = time.time()
-    sstv.process(im)
+    sstv.process()
     end_time = time.time()
-    sstv.wav.writefile_wav('data/sstv.wav')
+    sstv.saveToFile('data/sstv.wav')
     print "%s seconds" % (end_time-start_time)

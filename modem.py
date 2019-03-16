@@ -9,7 +9,7 @@ class AFSK():
         self.freqs = [lfreq, hfreq]
         self.bit_durration = 1000000 / self.baud
         self.wav = WaveFile(sample_rate)
-        self.saveToFile = self.wav.writefile
+        self.saveToFile = self.wav.saveToFile
 
         self.bit_count = 0
         self.isHigh = False
