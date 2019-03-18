@@ -57,7 +57,7 @@ def main():
 
         if timers.expired("APRS"):
             if gpsdata['status'] == "fix":
-		print "sending location"
+                print "sending location"
                 frame = aprs.create_location_msg(gpsdata, telemetry)
             else:
                 print "sending only telemetrt"

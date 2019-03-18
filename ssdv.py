@@ -1,6 +1,7 @@
 from aprs import APRS
 from base91 import encode, decode
 import subprocess
+import os
 
 # see http://tt7hab.blogspot.co.il/2017/03/ssdv-slow-scan-digital-video.html
 
@@ -111,8 +112,8 @@ class SSDV():
         self.counter = 0
 
     def convert(self, src, dest):
-        self.counter += 1
-        print "convert \#%s" % self.counter
+        self.counter = len([name for name in os.listdir('./images') if os.path.isfile(name)])
+        # print "convert \#%s" % self.counter
         cmd = 'utils/ssdv/ssdv -e -i %s /home/pi/bmc401/%s /home/pi/bmc401/%s' % (self.counter, src, dest)
         out = subprocess.check_output(cmd, shell=True)
         print(out)
@@ -178,7 +179,7 @@ if __name__ == "__main__":
                'alt': 129.7
                }
     sensordata = {'outside_temp': -12
-		}
+                  }
     cam.overlay('4x6ub', gpsdata, sensordata)
     cam.saveToFile('tmp/ssdv.jpg')
     ssdv.convert('tmp/ssdv.jpg', 'tmp/image.ssdv')

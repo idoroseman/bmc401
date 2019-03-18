@@ -16,7 +16,15 @@ class Camera():
         self.basepath = path
         self.logo = Image.open("data/logo.png").convert("RGBA")
         self.mask = self.logo.copy()
-        self.logo.putalpha(150)
+        #self.logo.putalpha(150)
+        opacity_level = 127
+        datas = self.logo.getdata()
+        newData = []
+        for item in datas:
+            newData.append((0, 0, 0, opacity_level))
+        else:
+            newData.append(item)
+        self.logo.putdata(newData)
 
     def capture(self):
         self.camera.capture(self.stream, format='jpeg')

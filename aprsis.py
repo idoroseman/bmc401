@@ -29,7 +29,7 @@ class APRSISClient(threading.Thread):
                 for cb in self.callbacks:
                     cb(data.decode('utf-8'))
             except Exception as x:
-                if x.errno == 107: # Connection refused
+                if 'errno' in x and x.errno == 107: # Connection refused
                     try:
                         self.socket.connect((self.addr, self.port))
                     except:

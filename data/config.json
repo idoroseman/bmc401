@@ -10,8 +10,8 @@
   },
   "timers":{
    "APRS": 4,
-   "APRS-META":10,
-   "SSDV": 15,
+   "APRS-META":30,
+   "SSDV": 20,
    "BIT":  1
   },
   "frequencies":{
