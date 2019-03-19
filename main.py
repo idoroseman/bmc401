@@ -50,6 +50,7 @@ def main():
     ssdv = SSDV(config['callsign'], config['ssid'])
     sstv = SSTV()
     webserver = WebServer()
+    radio.play(config['frequencies']['SSTV'], 'data/Boatswain\ Whistle.wav')
 
     state = {"APRS": True, "SSDV": True, "SSTV": False, "BUZZER":True}
 
@@ -75,19 +76,13 @@ def main():
                 frame = aprs.create_telem_data_msg(telemetry, status_bits)
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
-            radio.freq(config['frequencies']['APRS'])
-            radio.tx()
-            os.system("aplay "+os.path.join(tmp_dir,'aprs.wav'))
-            radio.rx()
+            radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir,'aprs.wav'))
 
         if timers.expired("APRS-META"):
             frame = aprs.create_telem_name_msg(telemetry)
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
-            radio.freq(config['frequencies']['APRS'])
-            radio.tx()
-            os.system("aplay "+os.path.join(tmp_dir,'aprs.wav'))
-            radio.rx()
+            radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir,'aprs.wav'))
 
         if timers.expired("SSTV"):
             cam.capture()
@@ -99,10 +94,7 @@ def main():
             sstv.process()
             end_time = time.time()
             sstv.saveToFile(os.path.join(tmp_dir, 'sstv.wav'))
-            radio.freq(config['frequencies']['SSTV'])
-            radio.tx()
-            os.system("aplay " + os.path.join(tmp_dir, 'sstv.wav'))
-            radio.rx()
+            radio.play(config['frequencies']['SSTV'], os.path.join(tmp_dir, 'sstv.wav'))
 
         if timers.expired("SSDV"):
             cam.capture()
@@ -114,10 +106,7 @@ def main():
             packets, raw = ssdv.prepare(os.path.join(tmp_dir, "image.ssdv"))
             modem.encode(packets)
             modem.saveToFile(os.path.join(tmp_dir, 'ssdv.wav'))
-            radio.freq(config['frequencies']['APRS'])
-            radio.tx()
-            os.system("aplay " + os.path.join(tmp_dir, 'ssdv.wav'))
-            radio.rx()
+            radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir, 'ssdv.wav'))
 
         if timers.expired("BUZZER"):
             GPIO.output(config['pins']['BUZZER'], GPIO.HIGH)
