@@ -4,6 +4,8 @@ class Timers():
     def __init__(self, items):
         self.timeouts = items
         self.timestamps = {}
+        self.state = {}
+        self.triggers = []
 
     def expired(self, id):
         now = time.time()
@@ -13,19 +15,23 @@ class Timers():
         elif id not in self.timestamps:
             self.timestamps[id] = now
             return False
-        elif now - self.timestamps[id] > 60 * self.timeouts[id]:
+        elif id in self.triggers or (self.state[id] and now - self.timestamps[id] > 60 * self.timeouts[id]):
+            if id in self.triggers:
+                self.triggers.remove(id)
             self.timestamps[id] = now
             return True
         else:
             return False
 
-
+    def handle(self, state, triggers):
+        self.state = state
+        self.trigers += triggers
 
 
 #########################################################################
 
 if __name__ == "__main__":
-    timers = timers({"One": 1, "Five": 5 })
+    timers = Timers({"One": 1, "Five": 5 })
     while True:
         if timers.expired("One"):
             print "One"
