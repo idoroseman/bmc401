@@ -11,22 +11,24 @@ class Camera():
         # Create the in-memory stream
         self.stream = BytesIO()
         self.camera = PiCamera()
+        self.camera.rotation = 180
         self.camera.awb_mode = 'auto' # 'sunlight'
         time.sleep(2)
         self.basepath = path
         self.logo = Image.open("data/logo.png").convert("RGBA")
         self.mask = self.logo.copy()
-        #self.logo.putalpha(150)
-        opacity_level = 127
-        datas = self.logo.getdata()
-        newData = []
-        for item in datas:
-            newData.append((0, 0, 0, opacity_level))
-        else:
-            newData.append(item)
-        self.logo.putdata(newData)
+        self.logo.putalpha(150)
+        #opacity_level = 127
+        #datas = self.logo.getdata()
+        #newData = []
+        #for item in datas:
+        #    newData.append((0, 0, 0, opacity_level))
+        #else:
+        #    newData.append(item)
+        #self.logo.putdata(newData)
 
     def capture(self):
+        self.stream.seek(0)
         self.camera.capture(self.stream, format='jpeg')
         # "Rewind" the stream to the beginning so we can read its content
         self.stream.seek(0)
@@ -52,7 +54,7 @@ class Camera():
         draw.text((170, 5), "idoroseman.com", font=font, fill=yellow)
         draw.text((170, 25), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), yellow, font)
         # telemetry
-        draw.rectangle(((5, 155), (150, 240)), (255, 255, 255, 64))
+        draw.rectangle(((5, 155), (150, 240)), (255, 255, 255, 90))
         draw.text((10, 160), "Lat %2.4f" % gps['lat'], yellow, font)
         draw.text((10, 180), "Lon %2.4f" % gps['lon'], yellow, font)
         draw.text((10, 200), "Alt %s" % gps['alt'], yellow, font)
