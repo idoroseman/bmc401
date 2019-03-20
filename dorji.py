@@ -7,50 +7,50 @@ import RPi.GPIO as GPIO
 
 # Pin Definitions
 pins = {
-  'PTT'  : 17,  # LOW = TX, HIGH = RX
-  'PD'   : 27,  # LOW = Sleep, HIHJ = Normal
-  'HILO' : 22   # LOW = 0.5W, Float = 1W
-  }
+    'PTT': 17,  # LOW = TX, HIGH = RX
+    'PD': 27,  # LOW = Sleep, HIHJ = Normal
+    'HILO': 22  # LOW = 0.5W, Float = 1W
+}
+
 
 class Dorji():
-    def __init__(self,pins):
+    def __init__(self, pins):
         self.pin = pins
-	GPIO.setwarnings(False)
-	GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
 
         GPIO.setup(self.pin['PD'], GPIO.OUT)
-	GPIO.setup(self.pin['PTT'], GPIO.OUT)
-	GPIO.setup(self.pin['HILO'], GPIO.OUT)
-        GPIO.output(self.pin['PTT'], GPIO.HIGH) # LOW = TX, HIGH = RX
+        GPIO.setup(self.pin['PTT'], GPIO.OUT)
+        GPIO.setup(self.pin['HILO'], GPIO.OUT)
+        GPIO.output(self.pin['PTT'], GPIO.HIGH)  # LOW = TX, HIGH = RX
         GPIO.output(self.pin['PD'], GPIO.HIGH)  # LOW = Sleep, HIGH = Normal
-	GPIO.output(self.pin['HILO'], GPIO.LOW) # LOW = 0.5W, Float = 1W
+        GPIO.output(self.pin['HILO'], GPIO.LOW)  # LOW = 0.5W, Float = 1W
 
-        os.system('gpio -g mode 18 alt5') # sets GPIO 18 pin to ALT 5 mode = GPIO_GEN1
+        os.system('gpio -g mode 18 alt5')  # sets GPIO 18 pin to ALT 5 mode = GPIO_GEN1
 
-	self.ser = serial.Serial(
+        self.ser = serial.Serial(
             port='/dev/serial0',
-            baudrate = 9600,
+            baudrate=9600,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
             bytesize=serial.EIGHTBITS,
             timeout=1,
-	    write_timeout=1
-           )
+            write_timeout=1
+        )
 
         self.isOK = False
         self.init()
 
-
     def cmnd(self, data):
         try:
-          while True:
-            self.ser.write(data)
-            time.sleep(1)
-            x=self.ser.readline()
-            print x.strip()
-            if x.startswith('+') or x.startswith("S="):
-                self.isOK = True
-                break;
+            while True:
+                self.ser.write(data)
+                time.sleep(1)
+                x = self.ser.readline()
+                print x.strip()
+                if x.startswith('+') or x.startswith("S="):
+                    self.isOK = True
+                    break;
         except KeyboardInterrupt:
             pass
 
@@ -89,6 +89,12 @@ class Dorji():
         elif level == "low":
             GPIO.output(self.pin['HILO'], GPIO.LOW)
 
+    def play(self, freq, filename):
+        self.freq(freq)
+        self.tx()
+        os.system("aplay " + filename)
+        self.rx()
+
 ##################################################
 
 if __name__ == "__main__":
@@ -99,20 +105,19 @@ if __name__ == "__main__":
         radio.init()
     elif sys.argv[1] == "scan":
         freq = float(sys.argv[2])
-	radio.scan(freq)
+        radio.scan(freq)
     elif sys.argv[1] == "freq":
         freq = float(sys.argv[2])
         radio.freq(freq)
     elif sys.argv[1] == "tx":
-	radio.tx()
+        radio.tx()
     elif sys.argv[1] == "rx":
         radio.rx()
     elif sys.argv[1] == "stby":
-	radio.standby()
+        radio.standby()
     elif sys.argv[1] == "power":
         radio.power(sys.argv[2])
     else:
         print "unknown"
 
 # GPIO.cleanup() # cleanup all GPIO
-

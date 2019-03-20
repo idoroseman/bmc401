@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import RPi.GPIO as GPIO
 
 from aprs import APRS
 from modem import AFSK
@@ -11,6 +12,7 @@ from sensors import Sensors
 from camera import Camera
 from ssdv import SSDV
 from sstv import SSTV
+from webserver import WebServer
 
 def calc_status_bits(gpsdata, sensordata):
     bits = [ gpsdata['status'] == "i2c error",
@@ -32,6 +34,10 @@ def main():
 
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
+
+    GPIO.setmode(GPIO.BCM)  # Broadcom pin-numbering scheme
+    GPIO.setup(config['pins']['BUZZER'], GPIO.OUT)
+
     aprs = APRS(config['callsign'], config['ssid'], "idoroseman.com")
     modem = AFSK()
     gps = Ublox()
@@ -43,6 +49,10 @@ def main():
     cam = Camera()
     ssdv = SSDV(config['callsign'], config['ssid'])
     sstv = SSTV()
+    webserver = WebServer()
+    radio.play(config['frequencies']['SSTV'], 'data/Boatswain\ Whistle.wav')
+
+    state = {"APRS": True, "SSDV": True, "SSTV": False, "BUZZER":True}
 
     exitFlag = False
     telemetry = {}
@@ -54,6 +64,8 @@ def main():
         status_bits = calc_status_bits(gpsdata, sensordata)
         telemetry['Satellites'] = gpsdata['SatCount']
         telemetry['TemperatureOut'] = sensors.read_outside_temp()
+        state, triggers = webserver.loop(state)
+        timers.handle(state, triggers)
 
         if timers.expired("APRS"):
             if gpsdata['status'] == "fix":
@@ -64,48 +76,43 @@ def main():
                 frame = aprs.create_telem_data_msg(telemetry, status_bits)
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
-            radio.freq(config['frequencies']['APRS'])
-            radio.tx()
-            os.system("aplay "+os.path.join(tmp_dir,'aprs.wav'))
-            radio.rx()
+            radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir,'aprs.wav'))
 
         if timers.expired("APRS-META"):
             frame = aprs.create_telem_name_msg(telemetry)
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
-            radio.freq(config['frequencies']['APRS'])
-            radio.tx()
-            os.system("aplay "+os.path.join(tmp_dir,'aprs.wav'))
-            radio.rx()
+            radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir,'aprs.wav'))
 
         if timers.expired("SSTV"):
             cam.capture()
             cam.archive()
             cam.resize((320, 256))
             cam.overlay(config['callsign'], gpsdata, sensordata)
+            cam.saveToFile(os.path.join(tmp_dir,'cam1.jpg'))
             sstv.image = cam.image
             sstv.process()
             end_time = time.time()
             sstv.saveToFile(os.path.join(tmp_dir, 'sstv.wav'))
-            radio.freq(config['frequencies']['SSTV'])
-            radio.tx()
-            os.system("aplay " + os.path.join(tmp_dir, 'sstv.wav'))
-            radio.rx()
+            radio.play(config['frequencies']['SSTV'], os.path.join(tmp_dir, 'sstv.wav'))
 
         if timers.expired("SSDV"):
             cam.capture()
             cam.archive()
             cam.resize((320, 256))
             cam.overlay(config['callsign'], gpsdata, sensordata)
-            cam.saveToFile(os.path.join(tmp_dir,'ssdv.jpg'))
-            ssdv.convert('tmp/ssdv.jpg', 'tmp/image.ssdv')
+            cam.saveToFile(os.path.join(tmp_dir,'cam1.jpg'))
+            ssdv.convert('tmp/cam1.jpg', 'tmp/image.ssdv')
             packets, raw = ssdv.prepare(os.path.join(tmp_dir, "image.ssdv"))
             modem.encode(packets)
             modem.saveToFile(os.path.join(tmp_dir, 'ssdv.wav'))
-            radio.freq(config['frequencies']['APRS'])
-            radio.tx()
-            os.system("aplay " + os.path.join(tmp_dir, 'ssdv.wav'))
-            radio.rx()
+            radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir, 'ssdv.wav'))
+
+        if timers.expired("BUZZER"):
+            GPIO.output(config['pins']['BUZZER'], GPIO.HIGH)
+            time.sleep(1)
+            GPIO.output(config['pins']['BUZZER'], GPIO.LOW)
+            time.sleep(1)
 
         time.sleep(1)
 
