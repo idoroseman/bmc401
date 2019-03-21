@@ -2,28 +2,28 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from urlparse import urlparse
 
-PORT_NUMBER = 80
+PORT_NUMBER = 8080
 
 gpsdata = {'status': 'fix',
            'latDir': 'N',
            'FixType': 'A3',
            'fixTime': '163018.00',
            'lat_raw': '3203.79986',
-           'lat': 32.063331,
-           'alt': 129.7,
+           'lat': 0,
+           'alt': 0,
            'navmode': 'flight',
            'lonDir': 'E',
            'groundSpeed': '36.2',
-           'lon': 34.87216566666667,
-           'SatCount': 4,
+           'lon': 0,
+           'SatCount': 0,
            'groundCourse': '123',
            'lon_raw': '03452.32994',
            'fixTimeStr': '16:30',
            'accentRate': 0.40599678574441816
            }
 telemetry = {'Satellites':4,
-         'TemperatureIn':26,
-         'TemperatureOut':26,
+         'outside_temp':0,
+         'inside_temp':0,
          'Pressure':1024,
          'Battery':5 }
 
@@ -38,7 +38,7 @@ class myHandler(BaseHTTPRequestHandler):
     # Handler for the GET requests
     def do_GET(self):
         if self.path.endswith(".jpg"):
-            f = open('images/' + self.path, "rb")
+            f = open('tmp/' + self.path, "rb")
             self.send_response(200)
             self.send_header('Content-type', 'image/png')
             self.end_headers()
@@ -58,7 +58,11 @@ class myHandler(BaseHTTPRequestHandler):
                 elif item=='enable':
                     state[query_components[item]] = True
                 elif item=='disable':
-                    state[query_components[item]] = False
+                    if query_components[item] == "ALL":
+                        for item in state:
+                          state[item]=False
+                    else:
+                        state[query_components[item]] = False
             # Send the html message
             rv = ""
             rv += """
@@ -85,7 +89,7 @@ class myHandler(BaseHTTPRequestHandler):
             <tr><td>Temp in</td><td>%2.1f</td></tr>
             <tr><td>Temp out</td><td>%2.1f</td></tr>
             <tr><td>Barometer</td><td>%4.1f</td></tr>
-            <tr></tr>""" % (telemetry['TemperatureOut'], telemetry['TemperatureIn'], telemetry['Pressure'])
+            <tr></tr>""" % (telemetry['outside_temp'], telemetry['inside_temp'], telemetry['barometer'])
 
             for system in systems:
                 try:
@@ -100,10 +104,11 @@ class myHandler(BaseHTTPRequestHandler):
                     state[x.message]=False
 
             rv += """
+            <tr><td></td><td></td><td><a href="?disable=ALL">Disable ALL</a><td></tr>
             </table>
             <br/>
             last image <a href="?refresh=image">refresh</a><br/>
-            <img src="picture.jpg"/></td></tr>
+            <img src="cam1.jpg" width="320px"/></td></tr>
             </body>
             </html>
             """
@@ -125,6 +130,12 @@ class WebServer():
         self.server.timeout = 1
         # Wait forever for incoming htto requests
         #server.serve_forever()
+
+    def update(self, gpsd, telemd):
+        global gpsdata
+        global telemetry
+        gpsdata = gpsd
+        telemetry= telemd
 
     def loop(self, new_state):
         global state

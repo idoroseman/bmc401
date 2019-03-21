@@ -50,7 +50,7 @@ def main():
     ssdv = SSDV(config['callsign'], config['ssid'])
     sstv = SSTV()
     webserver = WebServer()
-    radio.play(config['frequencies']['SSTV'], 'data/Boatswain\ Whistle.wav')
+    radio.play(config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
     state = {"APRS": True, "SSDV": True, "SSTV": False, "BUZZER":True}
 
@@ -64,6 +64,7 @@ def main():
         status_bits = calc_status_bits(gpsdata, sensordata)
         telemetry['Satellites'] = gpsdata['SatCount']
         telemetry['TemperatureOut'] = sensors.read_outside_temp()
+	webserver.update(gpsdata, sensordata)
         state, triggers = webserver.loop(state)
         timers.handle(state, triggers)
 
@@ -72,7 +73,7 @@ def main():
                 print "sending location"
                 frame = aprs.create_location_msg(gpsdata, telemetry)
             else:
-                print "sending only telemetrt"
+                print "sending only telemetry"
                 frame = aprs.create_telem_data_msg(telemetry, status_bits)
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))

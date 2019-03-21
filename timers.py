@@ -9,9 +9,12 @@ class Timers():
 
     def expired(self, id):
         now = time.time()
+        if id not in self.state:
+            self.state[id] = False
+
         if id not in self.timeouts:
             #raise Exception("item %s not in timers list" % id)
-            pass
+            return False
         elif id not in self.timestamps:
             self.timestamps[id] = now
             return False
@@ -25,7 +28,7 @@ class Timers():
 
     def handle(self, state, triggers):
         self.state = state
-        self.trigers += triggers
+        self.triggers += triggers
 
 
 #########################################################################
