@@ -72,6 +72,7 @@ class APRS():
         frame = self.create_frame()
         frame.add_byte('T')
         frame.add_byte('#')
+        frame.add_base91enc(self.sequence_counter, 2)
         self.sequence_counter = (self.sequence_counter + 1) & 0x1FFF
         frame.add_byte(',')
         for i in telemetry:

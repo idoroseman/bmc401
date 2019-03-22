@@ -10,26 +10,30 @@ class Timers():
     def expired(self, id):
         now = time.time()
         if id not in self.state:
+            print "added %s to states" % id
             self.state[id] = False
-
         if id not in self.timeouts:
-            #raise Exception("item %s not in timers list" % id)
+            print "added %s to timeouts" % id
             self.timeouts[id] = 0
             self.state[id] = False
-        elif id not in self.timestamps:
+
+        if id not in self.timestamps:
             self.timestamps[id] = now
             return False
         elif id in self.triggers or (self.state[id] and now - self.timestamps[id] > 60 * self.timeouts[id]):
             if id in self.triggers:
-                print "extracting trigger %s" % id
                 self.triggers.remove(id)
             self.timestamps[id] = now
             return True
         else:
             return False
 
+    def get_state(self):
+        return self.state
+
     def handle(self, state, triggers):
-        self.state = state
+        if state is not None:
+            self.state = state
         self.triggers += triggers
 
 

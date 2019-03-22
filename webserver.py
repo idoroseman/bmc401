@@ -28,7 +28,6 @@ telemetry = {'Satellites':4,
          'Pressure':1024,
          'Battery':5 }
 
-systems = {"APRS", "SSDV", "SSTV"}
 state = {}
 triggers = []
 
@@ -93,12 +92,12 @@ class myHandler(BaseHTTPRequestHandler):
             rv += """
     
             <tr></tr>
-            <tr><td>Temp in</td><td>%2.1f</td></tr>
             <tr><td>Temp out</td><td>%2.1f</td></tr>
+            <tr><td>Temp in</td><td>%2.1f</td></tr>
             <tr><td>Barometer</td><td>%4.1f</td></tr>
             <tr></tr>""" % (telemetry['outside_temp'], telemetry['inside_temp'], telemetry['barometer'])
 
-            for system in systems:
+            for system in state:
                 try:
                     rv += "<tr><td>%s</td>" % system
                     if state[system]:

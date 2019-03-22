@@ -52,7 +52,7 @@ def main():
     webserver = WebServer()
     radio.play(config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
-    state = {"APRS": True, "SSDV": True, "SSTV": False, "BUZZER":True}
+    timers.handle({"APRS": True, "SSDV": True, "SSTV": False, "BUZZER":True}, [])
 
     exitFlag = False
     telemetry = {}
@@ -67,7 +67,7 @@ def main():
 	telemetry['inside_temp'] = sensordata['inside_temp']
         telemetry['barometer'] = sensordata['barometer']
 	webserver.update(gpsdata, sensordata)
-        state, triggers = webserver.loop(state)
+        state, triggers = webserver.loop(timers.get_state())
         timers.handle(state, triggers)
 
         if timers.expired("APRS"):
@@ -88,9 +88,7 @@ def main():
             radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir,'aprs.wav'))
 
 	if timers.expired("Capture"):
-	    print "capture triggered"
             cam.capture()
-            cam.archive()
             cam.resize((320, 256))
             cam.overlay(config['callsign'], gpsdata, sensordata)
             cam.saveToFile(os.path.join(tmp_dir,'cam1.jpg'))

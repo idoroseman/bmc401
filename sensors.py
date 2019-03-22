@@ -41,10 +41,13 @@ class Sensors():
           return 0
 
     def read_inside_temp(self):
-        try:
-          return self.sensor.read_temperature()
-        except:
-          return 0
+        temp = None
+        while temp is None:
+          try:
+            temp = self.sensor.read_temperature()
+          except:
+            pass
+        return temp
 
     def read_outside_temp(self):
         lines = self.read_temp_raw()
