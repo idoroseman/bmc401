@@ -52,7 +52,7 @@ class aprs2ssdv():
             "encoding": "base64",
             # Because .isoformat() doesnt give us the right format... (boo)
             "received": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "receiver": self.callsign,
+            "receiver": "aprs2ssdv",
         }
         r = requests.post(self.ssdv_url, json=packet_dict)
         print r,r.text

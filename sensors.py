@@ -3,18 +3,28 @@ import glob
 import time
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
+import Adafruit_BMP.BMP085 as BMP085
+
+# see installation instruction on
+#  https://learn.adafruit.com/using-the-bmp085-with-raspberry-pi/using-the-adafruit-bmp-python-library
+
+#print('Temp = {0:0.2f} *C'.format(sensor.read_temperature()))
+#print('Pressure = {0:0.2f} Pa'.format(sensor.read_pressure()))
+#print('Altitude = {0:0.2f} m'.format(sensor.read_altitude()))
+#print('Sealevel Pressure = {0:0.2f} Pa'.format(sensor.read_sealevel_pressure()))
 
 class Sensors():
     def __init__(self):
         self.w1_base_dir = '/sys/bus/w1/devices/'
         self.w1_device_folder = glob.glob(self.w1_base_dir + '28*')[0]
         self.w1_device_file = self.w1_device_folder + '/w1_slave'
+        self.sensor = BMP085.BMP085()
 
     def get_data(self):
         return {
             'outside_temp': self.read_outside_temp(),
-            'inside_temp': 0,
-            'barometer' : 0
+            'inside_temp': self.read_inside_temp(),
+            'barometer' : self.read_pressure()
         }
 
     def read_temp_raw(self):
@@ -22,6 +32,19 @@ class Sensors():
         lines = f.readlines()
         f.close()
         return lines
+
+    def read_pressure(self):
+	try:
+          self.sensor.read_temperature()
+          return self.sensor.read_pressure() / 100.0
+        except:
+          return 0
+
+    def read_inside_temp(self):
+        try:
+          return self.sensor.read_temperature()
+        except:
+          return 0
 
     def read_outside_temp(self):
         lines = self.read_temp_raw()

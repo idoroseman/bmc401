@@ -14,12 +14,14 @@ class Timers():
 
         if id not in self.timeouts:
             #raise Exception("item %s not in timers list" % id)
-            return False
+            self.timeouts[id] = 0
+            self.state[id] = False
         elif id not in self.timestamps:
             self.timestamps[id] = now
             return False
         elif id in self.triggers or (self.state[id] and now - self.timestamps[id] > 60 * self.timeouts[id]):
             if id in self.triggers:
+                print "extracting trigger %s" % id
                 self.triggers.remove(id)
             self.timestamps[id] = now
             return True

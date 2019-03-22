@@ -11,7 +11,7 @@ class Camera():
         # Create the in-memory stream
         self.stream = BytesIO()
         self.camera = PiCamera()
-        self.camera.rotation = 180
+        #self.camera.rotation = 180
         self.camera.awb_mode = 'auto' # 'sunlight'
         time.sleep(2)
         self.basepath = path
@@ -42,7 +42,7 @@ class Camera():
         self.image = self.image.resize(newSize, Image.ANTIALIAS)
 
     def overlay(self, callsign, gps, sensors):
-        yellow = (255, 255, 0, 127)
+        yellow = (255, 255, 0, 255)
         layer = Image.new('RGBA', self.image.size, (255, 255, 255, 0))
         draw = ImageDraw.Draw(layer)
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 15)
@@ -58,8 +58,9 @@ class Camera():
         draw.text((10, 160), "Lat %2.4f" % gps['lat'], yellow, font)
         draw.text((10, 180), "Lon %2.4f" % gps['lon'], yellow, font)
         draw.text((10, 200), "Alt %s" % gps['alt'], yellow, font)
-        draw.text((10, 220), "%4.1fhPa" % 1234, yellow, font)
-        draw.text((100, 220), u"%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
+        draw.text((10, 220), "%4.1fhPa" % sensors['barometer'], yellow, font)
+        draw.text((100, 200), u"%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
+        draw.text((100, 220), u"%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
         # logo
         self.image.paste(self.logo, (220, 130), self.mask)
         del draw

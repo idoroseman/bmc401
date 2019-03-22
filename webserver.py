@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from urlparse import urlparse
+import datetime
 
 PORT_NUMBER = 8080
 
@@ -68,12 +69,18 @@ class myHandler(BaseHTTPRequestHandler):
             rv += """
             <html>
             <head>
-                <meta http-equiv="refresh" content="30">
+                <meta http-equiv="refresh" content="30; url=/">
             </head>
             <body>
             <h3>Ballon 5 Server</h3>
             <table border="0">
             """
+
+            now = datetime.datetime.now()
+            rv += """
+            <tr><td>Date</td><td>%s</td></tr>
+            <tr><td>Time</td><td>%s</td></tr>
+            """ % (datetime.datetime.strftime(now, "%Y-%m-%d"), datetime.datetime.strftime(now, "%H:%M:%S"))
 
             rv += """
             <tr><td>Lat</td><td>%2.4f</td></tr>
@@ -107,7 +114,7 @@ class myHandler(BaseHTTPRequestHandler):
             <tr><td></td><td></td><td><a href="?disable=ALL">Disable ALL</a><td></tr>
             </table>
             <br/>
-            last image <a href="?refresh=image">refresh</a><br/>
+            last image <a href="?trigger=Capture">recapture</a><br/>
             <img src="cam1.jpg" width="320px"/></td></tr>
             </body>
             </html>

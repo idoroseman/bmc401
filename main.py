@@ -63,7 +63,9 @@ def main():
         sensordata = sensors.get_data()
         status_bits = calc_status_bits(gpsdata, sensordata)
         telemetry['Satellites'] = gpsdata['SatCount']
-        telemetry['TemperatureOut'] = sensors.read_outside_temp()
+        telemetry['outside_temp'] = sensordata['outside_temp']
+	telemetry['inside_temp'] = sensordata['inside_temp']
+        telemetry['barometer'] = sensordata['barometer']
 	webserver.update(gpsdata, sensordata)
         state, triggers = webserver.loop(state)
         timers.handle(state, triggers)
@@ -84,6 +86,14 @@ def main():
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
             radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir,'aprs.wav'))
+
+	if timers.expired("Capture"):
+	    print "capture triggered"
+            cam.capture()
+            cam.archive()
+            cam.resize((320, 256))
+            cam.overlay(config['callsign'], gpsdata, sensordata)
+            cam.saveToFile(os.path.join(tmp_dir,'cam1.jpg'))
 
         if timers.expired("SSTV"):
             cam.capture()
