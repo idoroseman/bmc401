@@ -17,13 +17,32 @@ from webserver import WebServer
 def calc_status_bits(gpsdata, sensordata):
     bits = [ gpsdata['status'] == "i2c error",
              gpsdata['status'] == "comm error",
-             gpsdata['status'] != 'fix',
+             gpsdata['status'] == 'fix',
              False,
              False,
              False,
              False,
              False ]
     return ''.join(['1' if val else '0' for val in bits])
+
+status_names = ['gps i2c err', "gps comm err", "gps fix"]
+
+def calc_balloon_state(gpsdata):
+    if 'alt' not in calc_balloon_state.__dict__:
+        calc_balloon_state.alt = 0
+    if 'maxalt' not in calc_balloon_state.__dict__:
+        calc_balloon_state.maxalt = 0
+    if 'state' not in calc_balloon_state.__dict__:
+        calc_balloon_state.state = "ground"
+    if calc_balloon_state.state == "ground" and gpsdata['alt'] > 2000:
+        calc_balloon_state.state = "ascent"
+    if calc_balloon_state.state == "ground" and gpsdata['alt'] < calc_balloon_state.maxalt - 2000:
+        calc_balloon_state.state = "descent"
+    if calc_balloon_state.state == "descent" and gpsdata['alt'] < 2000:
+        calc_balloon_state.state = "landed"
+    if gpsdata['alt'] > calc_balloon_state.maxalt:
+        calc_balloon_state.maxalt = gpsdata['alt']
+    calc_balloon_state.alt = gpsdata['alt']
 
 def main():
     # setup
@@ -60,14 +79,18 @@ def main():
       try:
         gps.loop()
         gpsdata = gps.get_data()
+        if  gpsdata['status'] == "fix" and gpsdata['alt'] > 0:
+            sensors.calibrate_alt(gpsdata['alt'])
+        if gpsdata['status'] != "fix":
+            gpsdata['alt'] = sensors.read_pressure()
         sensordata = sensors.get_data()
         status_bits = calc_status_bits(gpsdata, sensordata)
         telemetry['Satellites'] = gpsdata['SatCount']
         telemetry['outside_temp'] = sensordata['outside_temp']
-	telemetry['inside_temp'] = sensordata['inside_temp']
+        telemetry['inside_temp'] = sensordata['inside_temp']
         telemetry['barometer'] = sensordata['barometer']
         telemetry['battery'] = 0
-	webserver.update(gpsdata, sensordata)
+        webserver.update(gpsdata, sensordata)
         state, triggers = webserver.loop(timers.get_state())
         timers.handle(state, triggers)
 
@@ -77,18 +100,18 @@ def main():
                 frame = aprs.create_location_msg(gpsdata, telemetry, status_bits)
             else:
                 print "sending only telemetry"
-                frame = aprs.create_telem_data_msg(telemetry, status_bits)
+                frame = aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
             radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir,'aprs.wav'))
 
         if timers.expired("APRS-META"):
-            frame = aprs.create_telem_name_msg(telemetry)
+            frame = aprs.create_telem_name_msg(telemetry, status_names)
             modem.encode(frame)
             modem.saveToFile(os.path.join(tmp_dir,'aprs.wav'))
             radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir,'aprs.wav'))
 
-	if timers.expired("Capture"):
+        if timers.expired("Capture"):
             cam.capture()
             cam.resize((320, 256))
             cam.overlay(config['callsign'], gpsdata, sensordata)
@@ -119,10 +142,11 @@ def main():
             radio.play(config['frequencies']['APRS'], os.path.join(tmp_dir, 'ssdv.wav'))
 
         if timers.expired("BUZZER"):
-            GPIO.output(config['pins']['BUZZER'], GPIO.HIGH)
-            time.sleep(1)
-            GPIO.output(config['pins']['BUZZER'], GPIO.LOW)
-            time.sleep(1)
+            for i in range(3):
+                GPIO.output(config['pins']['BUZZER'], GPIO.HIGH)
+                time.sleep(0.5)
+                GPIO.output(config['pins']['BUZZER'], GPIO.LOW)
+                time.sleep(0.5)
 
         time.sleep(1)
 
