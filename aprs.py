@@ -13,7 +13,7 @@ class APRS():
     def create_frame(self):
         return ax25(self.callsign, self.ssid, self.dest, 0, "WIDE1", 1, "WIDE2", 1)
 
-    def create_location_msg(self, gps , telemetry=None, comment=None ):
+    def create_location_msg(self, gps , telemetry=None, status='00000000', comment=None ):
         if comment==None:
             comment=self.comment
         # see Chapter 9: Compressed Position Report Data Formats
@@ -62,6 +62,7 @@ class APRS():
             self.sequence_counter = (self.sequence_counter + 1) & 0x1FFF
             for i in telemetry:
                 frame.add_base91enc(telemetry[i],2)
+            frame.add_base91enc(int(telemetry, 2))
             frame.add_byte('|')
         frame.add_string(comment)
         return frame
@@ -72,13 +73,14 @@ class APRS():
         frame = self.create_frame()
         frame.add_byte('T')
         frame.add_byte('#')
-        frame.add_base91enc(self.sequence_counter, 2)
+        frame.add_string("%03d" % self.sequence_counter)
         self.sequence_counter = (self.sequence_counter + 1) & 0x1FFF
         frame.add_byte(',')
         for i in telemetry:
             frame.add_string(telemetry[i])
             frame.add_byte(',')
         frame.add_string(status)
+        frame.add_byte(' ')
         frame.add_string(comment)
         return frame
 

@@ -19,6 +19,7 @@ class Sensors():
         self.w1_device_folder = glob.glob(self.w1_base_dir + '28*')[0]
         self.w1_device_file = self.w1_device_folder + '/w1_slave'
         self.sensor = BMP085.BMP085()
+	self.patsea = 101325.0
 
     def get_data(self):
         return {
@@ -48,6 +49,13 @@ class Sensors():
           except:
             pass
         return temp
+
+    def calibrate_alt(self, alt):
+        # alt in meters
+        self.patsea = self.sensor.read_sealevel_pressure(alt)
+
+    def reat_alt(self):
+        return sensor.read_altitude(self.patsea)
 
     def read_outside_temp(self):
         lines = self.read_temp_raw()

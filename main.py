@@ -17,7 +17,7 @@ from webserver import WebServer
 def calc_status_bits(gpsdata, sensordata):
     bits = [ gpsdata['status'] == "i2c error",
              gpsdata['status'] == "comm error",
-             False,
+             gpsdata['status'] != 'fix',
              False,
              False,
              False,
@@ -66,6 +66,7 @@ def main():
         telemetry['outside_temp'] = sensordata['outside_temp']
 	telemetry['inside_temp'] = sensordata['inside_temp']
         telemetry['barometer'] = sensordata['barometer']
+        telemetry['battery'] = 0
 	webserver.update(gpsdata, sensordata)
         state, triggers = webserver.loop(timers.get_state())
         timers.handle(state, triggers)
@@ -73,7 +74,7 @@ def main():
         if timers.expired("APRS"):
             if gpsdata['status'] == "fix":
                 print "sending location"
-                frame = aprs.create_location_msg(gpsdata, telemetry)
+                frame = aprs.create_location_msg(gpsdata, telemetry, status_bits)
             else:
                 print "sending only telemetry"
                 frame = aprs.create_telem_data_msg(telemetry, status_bits)
