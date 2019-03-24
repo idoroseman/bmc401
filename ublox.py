@@ -294,7 +294,12 @@ class Ublox():
             if self.parse_gngga(tokens):
                 self.set_status(im_good)
             try:
-                alt = float(self.GPSDAT["alt"])
+		try:
+                  alt = float(self.GPSDAT["alt"])
+                except:
+                  print "bad alt %s replacing with %s" %(self.GPSDAT['alt'], self.prev_alt)
+                  alt = self.prev_alt
+                  self.GPSDAT['alt'] = self.prev_alt
                 now = time.time()
                 delta_time = now - self.lastAltTime
                 if self.lastAltTime == 0:

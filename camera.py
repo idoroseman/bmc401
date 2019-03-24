@@ -55,7 +55,7 @@ class Camera():
         draw.text((170, 25), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), yellow, font)
         # telemetry
         draw.rectangle(((5, 155), (150, 240)), (255, 255, 255, 90))
-        if gps[status] == "fix":
+        if gps['status'] == "fix":
             draw.text((10, 160), "Lat %2.4f" % gps['lat'], yellow, font)
             draw.text((10, 180), "Lon %2.4f" % gps['lon'], yellow, font)
         draw.text((10, 200), "Alt %s" % gps['alt'], yellow, font)

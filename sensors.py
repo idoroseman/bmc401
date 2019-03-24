@@ -58,8 +58,10 @@ class Sensors():
 
     def calibrate_alt(self, alt):
         # alt in meters
-        self.patsea = self.sensor.read_sealevel_pressure(alt)
-
+        try:
+          self.patsea = self.sensor.read_sealevel_pressure(float(alt))
+        except:
+          pass
 
     def reat_alt(self):
         return sensor.read_altitude(self.patsea)
