@@ -67,7 +67,7 @@ class APRS():
         frame.add_string(comment)
         return frame
 
-    def create_telem_data_msg(self, telemetry, status='00000000', comment=None):
+    def create_telem_data_msg(self, telemetry, status='00000000', alt=None, comment=None):
         if comment==None:
             comment=self.comment
         frame = self.create_frame()
@@ -80,11 +80,13 @@ class APRS():
             frame.add_string(telemetry[i])
             frame.add_byte(',')
         frame.add_string(status)
+        if alt is not None:
+            frame.add_string("/A=%06d" % aprs_alt)
         frame.add_byte(' ')
         frame.add_string(comment)
         return frame
 
-    def create_telem_name_msg(self, telemetry):
+    def create_telem_name_msg(self, telemetry, binary_names = None):
         frame = self.create_frame()
         frame.add_byte(":")
         me = self.callsign + '-' + str(self.ssid)
