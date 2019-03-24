@@ -6,7 +6,9 @@
     "PTT": 17,
     "PD": 27,
     "HILO": 22,
-    "BUZZER": 13
+    "BUZZER": 13,
+    "LED1": 9,
+    "LED2":10
   },
   "timers":{
    "APRS": 4,

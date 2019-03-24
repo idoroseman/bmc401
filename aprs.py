@@ -62,7 +62,7 @@ class APRS():
             self.sequence_counter = (self.sequence_counter + 1) & 0x1FFF
             for i in telemetry:
                 frame.add_base91enc(telemetry[i],2)
-            frame.add_base91enc(int(telemetry, 2))
+            frame.add_base91enc(int(status, 2), 2)
             frame.add_byte('|')
         frame.add_string(comment)
         return frame

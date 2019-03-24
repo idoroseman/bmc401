@@ -3,18 +3,16 @@ import sys
 import json
 import time
 import thread
-try:
-  import RPi.GPIO as GPIO
-except:
-    pass
 
 try:
     # rpi hardware specific
+    import RPi.GPIO as GPIO
     from dorji import Dorji
     from sensors import Sensors
     from camera import Camera
 except:
     pass
+
 from aprs import APRS
 from modem import AFSK
 from ublox import Ublox
@@ -22,7 +20,6 @@ from timers import Timers
 from ssdv import SSDV
 from sstv import SSTV
 from webserver import WebServer
-
 
 class BalloonMissionComputer():
 
@@ -120,7 +117,7 @@ class BalloonMissionComputer():
         self.webserver = WebServer()
         self.radio.play(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
-        self.timers.handle({"APRS": True, "SSDV": True, "SSTV": False, "BUZZER": True}, [])
+        self.timers.handle({"APRS": True, "APRS-META":True, "SSDV": True, "SSTV": False, "BUZZER": True}, [])
 
         self.state = "init"
         self.min_alt = sys.maxint
@@ -201,6 +198,6 @@ class BalloonMissionComputer():
 
 
 if __name__ == "__main__":
-    main = BalloonMissionComputer()
-    main.setup()
-    main.run()
+    bmc = BalloonMissionComputer()
+    bmc.setup()
+    bmc.run()
