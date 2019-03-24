@@ -33,8 +33,11 @@ class Timers():
 
     def handle(self, state, triggers):
         if state is not None:
-            self.state = state
-        self.triggers += triggers
+            for item in state:
+                self.state[item] = state[item]
+
+        if type(triggers) is list:
+            self.triggers += triggers
 
 
 #########################################################################

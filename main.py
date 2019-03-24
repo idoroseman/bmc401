@@ -1,16 +1,24 @@
 import os
+import sys
 import json
 import time
 import thread
-import RPi.GPIO as GPIO
+try:
+  import RPi.GPIO as GPIO
+except:
+    pass
 
+try:
+    # rpi hardware specific
+    from dorji import Dorji
+    from sensors import Sensors
+    from camera import Camera
+except:
+    pass
 from aprs import APRS
 from modem import AFSK
 from ublox import Ublox
-from dorji import Dorji
 from timers import Timers
-from sensors import Sensors
-from camera import Camera
 from ssdv import SSDV
 from sstv import SSTV
 from webserver import WebServer
@@ -29,24 +37,38 @@ class BalloonMissionComputer():
                 False]
         return ''.join(['1' if val else '0' for val in bits])
 
-    self.status_names = ['gps i2c err', "gps comm err", "gps fix"]
+    status_names = ['gps i2c err', "gps comm err", "gps fix"]
 
     def calc_balloon_state(self, gpsdata):
-        if 'alt' not in calc_balloon_state.__dict__:
-            calc_balloon_state.alt = 0
-        if 'maxalt' not in calc_balloon_state.__dict__:
-            calc_balloon_state.maxalt = 0
-        if 'state' not in calc_balloon_state.__dict__:
-            calc_balloon_state.state = "ground"
-        if calc_balloon_state.state == "ground" and gpsdata['alt'] > 2000:
-            calc_balloon_state.state = "ascent"
-        if calc_balloon_state.state == "ground" and gpsdata['alt'] < calc_balloon_state.maxalt - 2000:
-            calc_balloon_state.state = "descent"
-        if calc_balloon_state.state == "descent" and gpsdata['alt'] < 2000:
-            calc_balloon_state.state = "landed"
-        if gpsdata['alt'] > calc_balloon_state.maxalt:
-            calc_balloon_state.maxalt = gpsdata['alt']
-        calc_balloon_state.alt = gpsdata['alt']
+        current_alt = gpsdata['alt']
+        if self.state == "init" and current_alt != 0:
+            self.state = "ground"
+            self.send_bulltin()
+        if self.state == "ground" and current_alt > self.min_alt + 2000:
+            self.state = "ascent"
+            self.send_bulltin()
+        if self.state == "ascent" and current_alt < self.max_alt - 2000:
+            self.state = "descent"
+            self.send_bulltin()
+        if self.state == "descent" and current_alt < 2000:
+            self.state = "landed"
+            self.send_bulltin()
+            self.timers.handle({'BUZZER':True}, [])
+
+        if current_alt > self.max_alt:
+            self.max_alt = current_alt
+        if current_alt > 0 and current_alt < self.min_alt:
+            self.min_alt = current_alt
+        self.prev_alt = current_alt
+
+    def send_bulltin(self):
+        try:
+            frame = self.aprs.create_message_msg("BLN1BALON", "changed state to %s" % self.state)
+            self.modem.encode(frame)
+            self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
+            self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
+        except:
+            pass
 
     def capture_image(self, gpsdata, sensordata, archive=True):
         self.cam.capture()
@@ -73,10 +95,8 @@ class BalloonMissionComputer():
         # setup
         with open('data/config.json') as fin:
             self.config = json.load(fin)
-        self.images_dir = config["directories"]["images"] if "directories" in config and "images" in config[
-            "directories"] else "./images"
-        self.tmp_dir = config["directories"]["tmp"] if "directories" in config and "tmp" in config[
-            "directories"] else "./tmp"
+        self.images_dir = self.config["directories"]["images"] if "directories" in self.config and "images" in self.config["directories"] else "./images"
+        self.tmp_dir = self.config["directories"]["tmp"] if "directories" in self.config and "tmp" in self.config["directories"] else "./tmp"
 
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
@@ -86,21 +106,27 @@ class BalloonMissionComputer():
         GPIO.setup(self.config['pins']['LED1'], GPIO.OUT)
         GPIO.setup(self.config['pins']['LED2'], GPIO.OUT)
 
-        self.aprs = APRS(config['callsign'], config['ssid'], "idoroseman.com")
+        self.aprs = APRS(self.config['callsign'], self.config['ssid'], "idoroseman.com")
         self.modem = AFSK()
         self.gps = Ublox()
         self.gps.start()
-        self.radio = Dorji(config['pins'])
+        self.radio = Dorji(self.config['pins'])
         self.radio.init()
-        self.timers = Timers(config['timers'])
+        self.timers = Timers(self.config['timers'])
         self.sensors = Sensors()
         self.cam = Camera()
-        self.ssdv = SSDV(config['callsign'], config['ssid'])
+        self.ssdv = SSDV(self.config['callsign'], self.config['ssid'])
         self.sstv = SSTV()
         self.webserver = WebServer()
-        self.radio.play(config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
+        self.radio.play(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
         self.timers.handle({"APRS": True, "SSDV": True, "SSTV": False, "BUZZER": True}, [])
+
+        self.state = "init"
+        self.min_alt = sys.maxint
+        self.max_alt = 0
+        self.prev_alt = 0
+        self.send_bulltin()
 
     def run(self):
         telemetry = {}
@@ -156,9 +182,9 @@ class BalloonMissionComputer():
                     thread.start_new_thread(self.process_ssdv)
 
                 if self.timers.expired("SSDV-PLAY"):
-                    self.radio.play(config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
+                    self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
 
-                if timers.expired("BUZZER"):
+                if self.timers.expired("BUZZER"):
                     for i in range(3):
                         GPIO.output(self.config['pins']['BUZZER'], GPIO.HIGH)
                         time.sleep(0.5)
