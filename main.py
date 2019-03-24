@@ -79,8 +79,9 @@ class BalloonMissionComputer():
     def process_ssdv(self):
         self.ssdv.convert('tmp/cam1.jpg', 'tmp/image.ssdv')
         packets = self.ssdv.prepare(os.path.join(self.tmp_dir, "image.ssdv"))
-        self.modem.encode(packets)
-        self.modem.saveToFile(os.path.join(self.tmp_dir, 'ssdv.wav'))
+        modem = AFSK()
+        modem.encode(packets)
+        modem.saveToFile(os.path.join(self.tmp_dir, 'ssdv.wav'))
         self.timers.handle(None, ["SSDV-PLAY"])
 
     def process_sstv(self):
