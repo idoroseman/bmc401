@@ -52,7 +52,7 @@ def main():
     webserver = WebServer()
     radio.play(config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
-    timers.handle({"APRS": True, "SSDV": True, "SSTV": False, "BUZZER":True}, [])
+    timers.handle({"APRS": True, "APRS-META": True, "SSDV": True, "SSTV": False, "BUZZER":True}, [])
 
     exitFlag = False
     telemetry = {}

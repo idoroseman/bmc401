@@ -35,11 +35,14 @@ class Sensors():
         return lines
 
     def read_pressure(self):
-	try:
-          self.sensor.read_temperature()
-          return self.sensor.read_pressure() / 100.0
-        except:
-          return 0
+	pressure = None
+        while pressure is None:
+          try:
+            self.sensor.read_temperature()
+            pressure = self.sensor.read_pressure() / 100.0
+          except:
+            pass
+        return pressure
 
     def read_inside_temp(self):
         temp = None
