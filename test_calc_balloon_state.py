@@ -13,6 +13,10 @@ class TestCalc_balloon_state(TestCase):
         bmc.min_alt = 9999999
         self.assertEqual("init", bmc.state )
 
+        # while no gps
+        bmc.calc_balloon_state({'alt': 0})
+        self.assertEqual("init", bmc.state)
+
         # first altitute from gps
         bmc.calc_balloon_state( {'alt':150} )
         self.assertEqual("ground", bmc.state )

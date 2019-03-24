@@ -133,7 +133,7 @@ class SSDV():
         # 220	Checksum	4	32-bit CRC.
         # 224	FEC	32	Reed-Solomon forward error correction data.
         rv = []
-        raw = []
+        counter = 0
         with open(filename, "rb") as f:
             aprs = APRS(self.callsign, self.ssid)
             while True:
@@ -147,19 +147,19 @@ class SSDV():
                 dataJ = frame[15+103:15+205] + '\0'
                 dataK = ''.join([chr(ord(dataI[i]) ^ ord(dataJ[i])) for i in range(len(dataI))])
                 pkt_base91 = encode(header+dataI)
-                msg = aprs.create_ssdv_msg('I', pkt_base91)
-                raw.append("{{I"+pkt_base91)
+                msg = aprs.create_ssdv_msg('I', counter, pkt_base91)
+                counter += 1
                 rv.append(msg)
                 pkt_base91 = encode(header+dataJ)
-                msg = aprs.create_ssdv_msg('J', pkt_base91)
-                raw.append("{{J"+pkt_base91)
+                msg = aprs.create_ssdv_msg('J', counter, pkt_base91)
+                counter += 1
                 rv.append(msg)
                 pkt_base91 = encode(header+dataK)
-                msg = aprs.create_ssdv_msg('K', pkt_base91)
-                raw.append("{{K"+pkt_base91)
+                msg = aprs.create_ssdv_msg('K', counter, pkt_base91)
+                counter += 1
                 rv.append(msg)
 
-        return rv, raw
+        return rv
 
 
 

@@ -105,11 +105,12 @@ class APRS():
         frame.add_string(msg[:67])
         return frame
 
-    def create_ssdv_msg(self, id, data):
+    def create_ssdv_msg(self, id, counter, data):
         frame = self.create_frame()
         frame.add_byte('{')
         frame.add_byte('{')
         frame.add_byte(id)
+        frame.add_string("%03d" % counter)
         frame.add_string(data)
         return frame
 
