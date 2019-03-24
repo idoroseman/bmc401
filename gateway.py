@@ -75,7 +75,7 @@ class aprs2ssdv():
               self.process_line(payload)
 
     def process_line(self, line):
-        data = decode(line[3:])
+        data = decode(line[6:])
         packet_type = line[2]
         image_id = data[0]
         packet_id = data[1] * 0x100 + data[2]
