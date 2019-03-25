@@ -30,6 +30,9 @@ telemetry = {'Satellites':4,
 
 state = {}
 triggers = []
+sysstate = ""
+
+start_time = datetime.datetime.now()
 
 # This class will handles any incoming request from
 # the browser
@@ -80,6 +83,12 @@ class myHandler(BaseHTTPRequestHandler):
             <tr><td>Date</td><td>%s</td></tr>
             <tr><td>Time</td><td>%s</td></tr>
             """ % (datetime.datetime.strftime(now, "%Y-%m-%d"), datetime.datetime.strftime(now, "%H:%M:%S"))
+
+            uptime = now-start_time
+            rv += """
+            <tr><td>state</td><td>%s</td></tr>
+            <tr><td>uptime</td><td>%s</td></tr>
+            """ % (sysstate, str(uptime))
 
             rv += """
             <tr><td>Lat</td><td>%2.4f</td></tr>

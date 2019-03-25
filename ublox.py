@@ -157,12 +157,14 @@ class Ublox():
           raise Exception("GPS not connected")
 
     def bit(self):
-        try:
+        for retry in range(5):
+          try:
             bus = smbus.SMBus(1)
             bus.read_byte(device)
-        except:
-            return True
-        return False
+            return False
+          except:
+            time.sleep(1)
+        return True
 
     def stop(self):
         self.exitFlag = True
