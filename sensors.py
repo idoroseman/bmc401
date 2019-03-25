@@ -37,33 +37,32 @@ class Sensors():
         return lines
 
     def read_pressure(self):
-	pressure = None
-        while pressure is None:
-          try:
-            self.sensor.read_temperature()
-            pressure = self.sensor.read_pressure() / 100.0
-          except:
-            pass
+        pressure = 900
+        for retry in range(5):
+            try:
+                self.sensor.read_temperature()
+                pressure = self.sensor.read_pressure() / 100.0
+                break
+            except:
+                pass
         return pressure
 
     def read_inside_temp(self):
-        temp = None
-        while temp is None:
+        temp = 0
+        for retry in range(5):
             try:
                 temp = self.sensor.read_temperature()
+                break
             except:
                 pass
         return temp
-
 
     def calibrate_alt(self, alt):
         # alt in meters
         self.patsea = self.sensor.read_sealevel_pressure(alt)
 
-
     def reat_alt(self):
-        return sensor.read_altitude(self.patsea)
-
+        return self.sensor.read_altitude(self.patsea)
 
     def read_outside_temp(self):
         lines = self.read_temp_raw()
