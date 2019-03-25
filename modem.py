@@ -12,7 +12,6 @@ class AFSK():
     def saveToFile(self, filename):
         self.wav.saveToFile(filename)
 
-
     def encode(self, Messages):
         self.wav = WaveFile(self.sample_rate)
         self.bit_count = 0

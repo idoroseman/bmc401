@@ -37,8 +37,8 @@ class BalloonMissionComputer():
     status_names = ['gps i2c err', "gps comm err", "gps fix"]
 
     def calc_balloon_state(self, gpsdata):
-        current_alt = gpsdata['alt']
-        if self.state == "init" and current_alt != 0:
+        current_alt = float(gpsdata['alt'])
+        if self.state == "init" and current_alt > 0:
             self.state = "ground"
             self.send_bulltin()
         if self.state == "ground" and current_alt > self.min_alt + 2000:
@@ -60,6 +60,7 @@ class BalloonMissionComputer():
 
     def send_bulltin(self):
         try:
+	    print "state changed to %s" % self.state
             frame = self.aprs.create_message_msg("BLN1BALON", "changed state to %s" % self.state)
             self.modem.encode(frame)
             self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
@@ -78,8 +79,9 @@ class BalloonMissionComputer():
     def process_ssdv(self):
         self.ssdv.convert('tmp/cam1.jpg', 'tmp/image.ssdv')
         packets = self.ssdv.prepare(os.path.join(self.tmp_dir, "image.ssdv"))
-        self.modem.encode(packets)
-        self.modem.saveToFile(os.path.join(self.tmp_dir, 'ssdv.wav'))
+        modem = AFSK()
+        modem.encode(packets)
+        modem.saveToFile(os.path.join(self.tmp_dir, 'ssdv.wav'))
         self.timers.handle(None, ["SSDV-PLAY"])
 
     def process_sstv(self):
@@ -98,6 +100,7 @@ class BalloonMissionComputer():
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
 
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)  # Broadcom pin-numbering scheme
         GPIO.setup(self.config['pins']['BUZZER'], GPIO.OUT)
         GPIO.setup(self.config['pins']['LED1'], GPIO.OUT)
@@ -132,6 +135,7 @@ class BalloonMissionComputer():
             try:
                 self.gps.loop()
                 gpsdata = self.gps.get_data()
+                self.calc_balloon_state(gpsdata)
                 if gpsdata['status'] == "fix" and gpsdata['alt'] > 0:
                     self.sensors.calibrate_alt(gpsdata['alt'])
                 if gpsdata['status'] != "fix":
@@ -176,7 +180,7 @@ class BalloonMissionComputer():
 
                 if self.timers.expired("SSDV"):
                     self.capture_image(gpsdata, sensordata)
-                    thread.start_new_thread(self.process_ssdv)
+                    thread.start_new_thread(self.process_ssdv, () )
 
                 if self.timers.expired("SSDV-PLAY"):
                     self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))

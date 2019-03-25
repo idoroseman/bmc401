@@ -20,7 +20,12 @@ class Sensors():
         self.w1_base_dir = '/sys/bus/w1/devices/'
         self.w1_device_folder = glob.glob(self.w1_base_dir + '28*')[0]
         self.w1_device_file = self.w1_device_folder + '/w1_slave'
-        self.sensor = BMP085.BMP085()
+        for retries in range(5):
+          try:
+            self.sensor = BMP085.BMP085()
+            break
+          except:
+            time.sleep(1)
         self.patsea = 101325.0
 
     def get_data(self):
@@ -57,9 +62,13 @@ class Sensors():
                 pass
         return temp
 
+
     def calibrate_alt(self, alt):
         # alt in meters
-        self.patsea = self.sensor.read_sealevel_pressure(alt)
+        try:
+          self.patsea = self.sensor.read_sealevel_pressure(float(alt))
+        except:
+          pass
 
     def reat_alt(self):
         return self.sensor.read_altitude(self.patsea)
