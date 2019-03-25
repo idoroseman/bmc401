@@ -48,14 +48,14 @@ class Camera():
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 15)
         bigfont = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 40)
         # callsign
-        draw.text((2, 2), callsign.upper(), font=bigfont, fill=(0, 0, 0, 192))
-        draw.text((0, 0), callsign.upper(), font=bigfont, fill=(255, 0, 0, 192))
+        # draw.text((2, 2), callsign.upper(), font=bigfont, fill=(0, 0, 0, 192))
+        # draw.text((0, 0), callsign.upper(), font=bigfont, fill=(255, 0, 0, 192))
         # url & date time
         draw.text((170, 5), "idoroseman.com", font=font, fill=yellow)
         draw.text((170, 25), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), yellow, font)
         # telemetry
         draw.rectangle(((5, 155), (150, 240)), (255, 255, 255, 90))
-        if gps[status] == "fix":
+        if gps['status'] == "fix":
             draw.text((10, 160), "Lat %2.4f" % gps['lat'], yellow, font)
             draw.text((10, 180), "Lon %2.4f" % gps['lon'], yellow, font)
         draw.text((10, 200), "Alt %s" % gps['alt'], yellow, font)

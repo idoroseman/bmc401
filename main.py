@@ -143,7 +143,7 @@ class BalloonMissionComputer():
                 telemetry['inside_temp'] = sensordata['inside_temp']
                 telemetry['barometer'] = sensordata['barometer']
                 telemetry['battery'] = 0
-                self.webserver.update(gpsdata, sensordata)
+                self.webserver.update(gpsdata, sensordata, self.state)
                 state, triggers = self.webserver.loop(self.timers.get_state())
                 self.timers.handle(state, triggers)
 
