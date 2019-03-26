@@ -42,10 +42,22 @@ class myHandler(BaseHTTPRequestHandler):
         if self.path.endswith(".jpg"):
             f = open('tmp/' + self.path, "rb")
             self.send_response(200)
+            self.send_header('Content-type', 'image/jpg')
+            self.end_headers()
+            self.wfile.write(f.read())
+            f.close()
+            return
+        elif self.path.endswith(".png"):
+            f = open('data/' + self.path, "rb")
+            self.send_response(200)
             self.send_header('Content-type', 'image/png')
             self.end_headers()
             self.wfile.write(f.read())
             f.close()
+            return
+	elif self.path.endswith(".ico"):
+	    self.send_response(404)
+	    self.end_headers()
             return
         else:
 
@@ -71,6 +83,7 @@ class myHandler(BaseHTTPRequestHandler):
             <html>
             <head>
                 <meta http-equiv="refresh" content="30; url=/">
+                <meta http-equiv="Cache-Control" content="private" />
             </head>
             <body>
             <h3>Ballon 5 Server</h3>
@@ -83,11 +96,11 @@ class myHandler(BaseHTTPRequestHandler):
             <tr><td>Time</td><td>%s</td></tr>
             """ % (datetime.datetime.strftime(now, "%Y-%m-%d"), datetime.datetime.strftime(now, "%H:%M:%S"))
 
-            uptime = now-start_time
+            uptime = str(now-start_time).split('.')[0]
             rv += """
             <tr><td>state</td><td>%s</td></tr>
             <tr><td>uptime</td><td>%s</td></tr>
-            """ % (sysstate, str(uptime))
+            """ % (sysstate, uptime)
 
             rv += """
             <tr><td>Lat</td><td>%2.4f</td></tr>
@@ -109,19 +122,18 @@ class myHandler(BaseHTTPRequestHandler):
                 try:
                     rv += "<tr><td>%s</td>" % system
                     if state[system]:
-                        rv += '<td>Enabled</td><td><a href="?disable=%s">Disable</a></td>' % system
+                        rv += '<td bgcolor="#80FF80">Enabled</td><td><a href="?disable=%s">Disable</a></td>' % system
                     else:
-                        rv += '<td><a href="?enable=%s">Enable</a></td><td>Disabled</td>' % system
+                        rv += '<td ><a href="?enable=%s">Enable</a></td><td bgcolor="#FF8080">Disabled</td>' % system
                     rv += '<td><a href="?trigger=%s">Trigger</a></td>' % system
                     rv += '</tr>'
                 except KeyError as x:
                     state[x.message]=False
-
             rv += """
             <tr><td></td><td></td><td><a href="?disable=ALL">Disable ALL</a><td></tr>
             </table>
             <br/>
-            last image <a href="?trigger=Capture">recapture</a><br/>
+            last image <a href="?trigger=Snapshot">recapture</a><br/>
             <img src="cam1.jpg" width="320px"/></td></tr>
             </body>
             </html>
@@ -148,6 +160,7 @@ class WebServer():
     def update(self, gpsd, telemd, stated):
         global gpsdata
         global telemetry
+        global sysstate
         gpsdata = gpsd
         telemetry= telemd
         sysstate = stated

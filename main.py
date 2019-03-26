@@ -82,13 +82,13 @@ class BalloonMissionComputer():
         modem = AFSK()
         modem.encode(packets)
         modem.saveToFile(os.path.join(self.tmp_dir, 'ssdv.wav'))
-        self.timers.handle(None, ["SSDV-PLAY"])
+        self.timers.handle(None, ["PLAY-SSDV"])
 
     def process_sstv(self):
         self.sstv.image = self.cam.image
         self.sstv.process()
         self.sstv.saveToFile(os.path.join(self.tmp_dir, 'sstv.wav'))
-        self.timers.handle(None, ["SSTV-PLAY"])
+        self.timers.handle(None, ["PLAY-SSTV"])
 
     def setup(self):
         # setup
@@ -120,8 +120,9 @@ class BalloonMissionComputer():
         self.webserver = WebServer()
         self.radio.play(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
-        self.timers.handle({"APRS": True, "APRS-META":True, "SSDV": True, "SSTV": False, "BUZZER": True}, [])
+        self.timers.handle({"APRS": True, "APRS-META":True, "Imaging": True,"Buzzer": False, 'Capture': True}, [])
 
+        self.imaging_counter = 1
         self.state = "init"
         self.min_alt = sys.maxint
         self.max_alt = 0
@@ -169,23 +170,29 @@ class BalloonMissionComputer():
                     self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
 
                 if self.timers.expired("Capture"):
+                    self.capture_image(gpsdata, sensordata)
+
+                if self.timers.expired("Snapshot"):
                     self.capture_image(gpsdata, sensordata, archive=False)
 
-                if self.timers.expired("SSTV"):
-                    self.capture_image(gpsdata, sensordata)
-                    self.process_sstv()
+                if self.timers.expired("Imaging"):
+                    self.imaging_counter += 1
+                    cam_select = self.imaging_counter % 2
+                    system = self.imaging_counter % 3
+                    # second camera tdb
+                    self.capture_image(gpsdata, sensordata, archive=False)
+                    if system == 0:
+                        self.process_sstv()
+                    else:
+                        thread.start_new_thread(self.process_ssdv, () )
 
-                if self.timers.expired("SSTV-PLAY"):
-                        self.radio.play(self.config['frequencies']['SSTV'], os.path.join(self.tmp_dir, 'sstv.wav'))
-
-                if self.timers.expired("SSDV"):
-                    self.capture_image(gpsdata, sensordata)
-                    thread.start_new_thread(self.process_ssdv, () )
-
-                if self.timers.expired("SSDV-PLAY"):
+                if self.timers.expired("PLAY-SSDV"):
                     self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
 
-                if self.timers.expired("BUZZER"):
+                if self.timers.expired("PLAY-SSTV"):
+                        self.radio.play(self.config['frequencies']['SSTV'], os.path.join(self.tmp_dir, 'sstv.wav'))
+
+                if self.timers.expired("Buzzer"):
                     for i in range(3):
                         GPIO.output(self.config['pins']['BUZZER'], GPIO.HIGH)
                         time.sleep(0.5)

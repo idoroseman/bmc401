@@ -13,7 +13,8 @@
   "timers":{
    "APRS": 4,
    "APRS-META":60,
-   "SSDV": 40,
+   "Capture":10,
+   "Imaging": 40,
    "BIT":  1
   },
   "frequencies":{

@@ -14,7 +14,7 @@ class SSTV():
         self.wav = WaveFile()
         self.wav.info()
         self.playtone = self.wav.playtone
-        self.saveToFile = self.wav.saveToFile()
+        self.saveToFile = self.wav.saveToFile
 
         self.addvisheader()
         self.buildaudio()
