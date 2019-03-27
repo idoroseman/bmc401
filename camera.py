@@ -38,11 +38,17 @@ class Camera():
           self.image = Image.new("RGBA", (320,256))
 
     def archive(self):
-        filename = datetime.datetime.now().strftime("%Y-%m-%d %H%M")
+        filename = datetime.datetime.now().strftime("%Y-%m-%d-%H%M")
         self.image.save(os.path.join(self.basepath, filename + ".jpg"), "JPEG")
 
     def resize(self, newSize):
-        self.image = self.image.thumbnail(newSize, Image.ANTIALIAS)
+        w, h = self.image.size
+        w1, h1 = newSize
+        w2 = int(w*h1/h)
+        left = (w - w1)/2
+        right = (w + w1)/2
+        self.image = self.image.resize((w2, h1), Image.ANTIALIAS)
+        self.image = self.image.crop((left, 0, right, h1-2))
 
     def overlay(self, callsign, gps, sensors):
         yellow = (255, 255, 0, 255)

@@ -86,7 +86,7 @@ class myHandler(BaseHTTPRequestHandler):
                 <meta http-equiv="Cache-Control" content="private" />
             </head>
             <body>
-            <h3>Ballon 5 Server</h3>
+            <h3>Balloon 5 Server</h3>
             <table border="0">
             """
 
