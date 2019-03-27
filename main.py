@@ -24,17 +24,17 @@ from webserver import WebServer
 class BalloonMissionComputer():
 
     def calc_status_bits(self, gpsdata, sensordata):
-        bits = [gpsdata['status'] == "i2c error",
+        bits = [False,
+                False,
+                False,
+                False,
+                gpsdata['status'] == "fix",
+                gpsdata['status'] == "lost",
                 gpsdata['status'] == "comm error",
-                gpsdata['status'] == 'fix',
-                False,
-                False,
-                False,
-                False,
-                False]
+                gpsdata['status'] == "i2c error"]
         return ''.join(['1' if val else '0' for val in bits])
 
-    status_names = ['gps i2c err', "gps comm err", "gps fix"]
+    status_names = ['gps i2c err', "gps comm err", "gps no fix", "gps ok"]
 
     def calc_balloon_state(self, gpsdata):
         current_alt = float(gpsdata['alt'])
@@ -153,6 +153,7 @@ class BalloonMissionComputer():
                 self.timers.handle(state, triggers)
 
                 if self.timers.expired("APRS"):
+                    print "---", status_bits
                     if gpsdata['status'] == "fix":
                         print "sending location"
                         frame = self.aprs.create_location_msg(gpsdata, telemetry, status_bits)

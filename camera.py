@@ -28,18 +28,21 @@ class Camera():
         #self.logo.putdata(newData)
 
     def capture(self):
-        self.stream.seek(0)
-        self.camera.capture(self.stream, format='jpeg')
-        # "Rewind" the stream to the beginning so we can read its content
-        self.stream.seek(0)
-        self.image = Image.open(self.stream).convert("RGBA")
+	try:
+          self.stream.seek(0)
+          self.camera.capture(self.stream, format='jpeg')
+          # "Rewind" the stream to the beginning so we can read its content
+          self.stream.seek(0)
+          self.image = Image.open(self.stream).convert("RGBA")
+	except:
+          self.image = Image.new("RGBA", (320,256))
 
     def archive(self):
         filename = datetime.datetime.now().strftime("%Y-%m-%d %H%M")
         self.image.save(os.path.join(self.basepath, filename + ".jpg"), "JPEG")
 
     def resize(self, newSize):
-        self.image = self.image.resize(newSize, Image.ANTIALIAS)
+        self.image = self.image.thumbnail(newSize, Image.ANTIALIAS)
 
     def overlay(self, callsign, gps, sensors):
         yellow = (255, 255, 0, 255)
