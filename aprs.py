@@ -81,7 +81,7 @@ class APRS():
             frame.add_byte(',')
         frame.add_string(status)
         if alt is not None:
-            frame.add_string("/A=%06d" % aprs_alt)
+            frame.add_string("/A=%06d" % alt)
         frame.add_byte(' ')
         frame.add_string(comment)
         return frame
@@ -95,6 +95,9 @@ class APRS():
         frame.add_byte(":")
         frame.add_string("PARM.")
         frame.add_string(",".join(telemetry.keys()))
+        if binary_names is not None:
+            frame.add_byte(",")
+	    frame.add_string(",".join(binary_names))
         return frame
 
     def create_message_msg(self, to, msg):

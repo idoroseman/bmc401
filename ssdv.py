@@ -112,8 +112,9 @@ class SSDV():
         self.counter = 0
 
     def convert(self, src, dest):
-        self.counter = len([name for name in os.listdir('./images') if os.path.isfile(os.path.join('./images',name))])
+        # self.counter = len([name for name in os.listdir('./images') if os.path.isfile(os.path.join('./images',name))])
         # print "convert \#%s" % self.counter
+        self.counter += 1
         cmd = 'utils/ssdv/ssdv -e -i %s /home/pi/bmc401/%s /home/pi/bmc401/%s' % (self.counter, src, dest)
         out = subprocess.check_output(cmd, shell=True)
         print(out)

@@ -157,12 +157,14 @@ class Ublox():
           raise Exception("GPS not connected")
 
     def bit(self):
-        try:
+        for retry in range(5):
+          try:
             bus = smbus.SMBus(1)
             bus.read_byte(device)
-        except:
-            return True
-        return False
+            return False
+          except:
+            time.sleep(1)
+        return True
 
     def stop(self):
         self.exitFlag = True
@@ -294,7 +296,12 @@ class Ublox():
             if self.parse_gngga(tokens):
                 self.set_status(im_good)
             try:
-                alt = float(self.GPSDAT["alt"])
+		try:
+                  alt = float(self.GPSDAT["alt"])
+                except:
+                  print "bad alt %s replacing with %s" %(self.GPSDAT['alt'], self.prev_alt)
+                  alt = self.prev_alt
+                  self.GPSDAT['alt'] = self.prev_alt
                 now = time.time()
                 delta_time = now - self.lastAltTime
                 if self.lastAltTime == 0:
