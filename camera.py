@@ -45,8 +45,8 @@ class Camera():
         w, h = self.image.size
         w1, h1 = newSize
         w2 = int(w*h1/h)
-        left = (w - w1)/2
-        right = (w + w1)/2
+        left = (w2 - w1)/2
+        right = (w2 + w1)/2
         self.image = self.image.resize((w2, h1), Image.ANTIALIAS)
         self.image = self.image.crop((left, 0, right, h1-2))
 
