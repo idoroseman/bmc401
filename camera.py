@@ -45,8 +45,8 @@ class Camera():
 
     def archive(self):
         filename = datetime.datetime.now().strftime("%Y-%m-%d-%H%M")
-        self.image1.save(os.path.join(self.basepath, filename + "cam1.jpg"), "JPEG")
-        self.image2.save(os.path.join(self.basepath, filename + "cam2.jpg"), "JPEG")
+        self.image1.save(os.path.join(self.basepath, filename + "-cam1.jpg"), "JPEG")
+        self.image2.save(os.path.join(self.basepath, filename + "-cam2.jpg"), "JPEG")
 
     def select(self, id):
         print "using camera %s "%id
