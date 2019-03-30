@@ -30,8 +30,10 @@ class aprs2ssdv():
     def __init__(self, callsign):
         self.packets = {}
         self.headers = {}
+        self.receivers = {}
         self.callsign = callsign
         self.ssdv_url = "http://ssdv.habhub.org/api/v0/packets"
+        self.count = 0
 
     def merge(self, header, i, j):
         pre = ''.join([chr(x) for x in [0x55, 0x66]])
@@ -45,14 +47,15 @@ class aprs2ssdv():
         data += ''.join(['\0'] * 32) # fec
         return data
 
-    def upload(self, packet):
+    def upload(self, packet, receivers):
+        self.count += 1
         packet_dict = {
             "type": "packet",
             "packet": base64.b64encode(packet),
             "encoding": "base64",
             # Because .isoformat() doesnt give us the right format... (boo)
             "received": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "receiver": "aprs2ssdv",
+            "receiver": receivers[self.count % len(receivers)],
         }
         r = requests.post(self.ssdv_url, json=packet_dict)
         print r,r.text
@@ -69,12 +72,13 @@ class aprs2ssdv():
         header, payload = msg.split(":", 1)
         tokens = header.split(',')
         src, dest = tokens[0].split(">")
+        receiver = tokens[-1]
         if dest == 'APE6UB' :
             print payload
             if payload.startswith("{{"):
-              self.process_line(payload)
+              self.process_line(receiver, payload)
 
-    def process_line(self, line):
+    def process_line(self, receiver, line):
         data = decode(line[6:])
         packet_type = line[2]
         image_id = data[0]
@@ -92,19 +96,26 @@ class aprs2ssdv():
             self.headers[hash] = data[0:9]
         elif data[0:9] != self.headers[hash]:
             print "header ", data[0:9], self.headers[hash]
+	if image_id not in self.receivers:
+            self.receivers[image_id] = ['SSDV over APRS']
         self.packets[hash][packet_type] = data[9:]
+        if receiver not in self.receivers[image_id]:
+            self.receivers[image_id] += [receiver]
         keys = "".join(self.packets[hash].keys())
         if keys == "IJ":
             packet = self.merge(self.headers[hash], self.packets[hash]['I'], self.packets[hash]['J'])
-            self.upload(packet)
+            self.upload(packet, self.receivers[image_id])
         elif keys == "IK":
             data = ''.join([chr(self.packets[hash]['I'][i] ^ self.packets[hash]['K'][i]) for i in range(len(self.packets[hash]['K']))])
             packet = self.merge(self.headers[hash], self.packets[hash]['I'], data)
-            self.upload(packet)
+            self.upload(packet, self.receivers[image_id])
         elif keys == "KJ":
             data = ''.join([chr(self.packets[hash]['J'][i] ^ self.packets[hash]['K'][i]) for i in range(len(self.packets[hash]['K']))])
             packet = self.merge(self.headers[hash], data, self.packets[hash]['J'])
-            self.upload(packet)
+            self.upload(packet, self.receivers[image_id])
+        elif len(keys) == 3:
+            # verify crc
+            pass
 
 
 ########################################################################################################################
