@@ -134,7 +134,7 @@ class myHandler(BaseHTTPRequestHandler):
             </table>
             <br/>
             last image <a href="?trigger=Snapshot">recapture</a><br/>
-            <img src="cam1.jpg" width="320px"/></td></tr>
+            <img src="image.jpg" width="320px"/></td></tr>
             </body>
             </html>
             """

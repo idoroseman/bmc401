@@ -10,8 +10,8 @@ try:
     from dorji import Dorji
     from sensors import Sensors
     from camera import Camera
-except:
-    pass
+except Exception as x:
+    print x
 
 from aprs import APRS
 from modem import AFSK
@@ -68,16 +68,19 @@ class BalloonMissionComputer():
         except:
             pass
 
-    def capture_image(self, gpsdata, sensordata, archive=True):
+    def capture_image(self, archive=True):
         self.cam.capture()
         if archive:
           self.cam.archive()
+
+    def prep_image(self, id, gpsdata, sensordata):
+        self.cam.select(id)
         self.cam.resize((320, 256))
         self.cam.overlay(self.config['callsign'], gpsdata, sensordata)
-        self.cam.saveToFile(os.path.join(self.tmp_dir, 'cam1.jpg'))
+        self.cam.saveToFile(os.path.join(self.tmp_dir,"image.jpg"))
 
     def process_ssdv(self):
-        self.ssdv.convert('tmp/cam1.jpg', 'tmp/image.ssdv')
+        self.ssdv.convert('tmp/image.jpg', 'tmp/image.ssdv')
         packets = self.ssdv.prepare(os.path.join(self.tmp_dir, "image.ssdv"))
         modem = AFSK()
         modem.encode(packets)
@@ -153,7 +156,6 @@ class BalloonMissionComputer():
                 self.timers.handle(state, triggers)
 
                 if self.timers.expired("APRS"):
-                    print "---", status_bits
                     if gpsdata['status'] == "fix":
                         print "sending location"
                         frame = self.aprs.create_location_msg(gpsdata, telemetry, status_bits)
@@ -171,18 +173,21 @@ class BalloonMissionComputer():
                     self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
 
                 if self.timers.expired("Capture"):
-                    self.capture_image(gpsdata, sensordata)
+                    self.capture_image()
 
                 if self.timers.expired("Snapshot"):
-                    self.capture_image(gpsdata, sensordata, archive=False)
+                    self.imaging_counter += 1
+                    cam_select = self.imaging_counter % 2
+                    self.capture_image(archive=False)
+                    self.prep_image(cam_select, gpsdata, sensordata)
 
                 if self.timers.expired("Imaging"):
                     self.imaging_counter += 1
                     cam_select = self.imaging_counter % 2
-                    system = self.imaging_counter % 3
-                    # second camera tdb
-                    self.capture_image(gpsdata, sensordata, archive=False)
-                    if system == 0:
+                    cam_system = self.imaging_counter % 3
+                    self.capture_image(archive=False)
+                    self.prep_image(cam_select, gpsdata, sensordata)
+                    if cam_system == 0:
                         self.process_sstv()
                     else:
                         thread.start_new_thread(self.process_ssdv, () )

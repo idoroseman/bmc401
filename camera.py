@@ -28,27 +28,42 @@ class Camera():
         #self.logo.putdata(newData)
 
     def capture(self):
-	try:
-          self.stream.seek(0)
-          self.camera.capture(self.stream, format='jpeg')
-          # "Rewind" the stream to the beginning so we can read its content
-          self.stream.seek(0)
-          self.image = Image.open(self.stream).convert("RGBA")
+     	try:
+            self.stream.seek(0)
+            self.camera.capture(self.stream, format='jpeg')
+            # "Rewind" the stream to the beginning so we can read its content
+            self.stream.seek(0)
+            self.image1 = Image.open(self.stream).convert("RGBA")
 	except:
-          self.image = Image.new("RGBA", (320,256))
+            self.image1 = Image.new("RGBA", (320,256))
+
+        try:
+            os.system("fswebcam -d /dev/video1 --no-banner tmp/usbcam.jpg")
+            self.image2 = Image.open("tmp/usbcam.jpg").convert("RGBA")
+        except:
+            self.image2 = Image.new("RGBA", (320,256))
 
     def archive(self):
         filename = datetime.datetime.now().strftime("%Y-%m-%d-%H%M")
-        self.image.save(os.path.join(self.basepath, filename + ".jpg"), "JPEG")
+        self.image1.save(os.path.join(self.basepath, filename + "cam1.jpg"), "JPEG")
+        self.image2.save(os.path.join(self.basepath, filename + "cam2.jpg"), "JPEG")
+
+    def select(self, id):
+        print "using camera %s "%id
+        if id == 0:
+          self.image = self.image1
+        else:
+          self.image = self.image2
 
     def resize(self, newSize):
         w, h = self.image.size
         w1, h1 = newSize
+	# h1 &= 0xfff0 # image size should be multiple of 16
         w2 = int(w*h1/h)
         left = (w2 - w1)/2
         right = (w2 + w1)/2
         self.image = self.image.resize((w2, h1), Image.ANTIALIAS)
-        self.image = self.image.crop((left, 0, right, h1-2))
+        self.image = self.image.crop((left, 0, right, h1))
 
     def overlay(self, callsign, gps, sensors):
         yellow = (255, 255, 0, 255)
