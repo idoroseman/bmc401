@@ -252,7 +252,7 @@ class Ublox():
                                 'date', 'mode'])
         if RMCDAT["lat_raw"] == "":
             return False
-        for i, k in enumerate(['fixTime', 'lat_raw', 'latDir', 'lon_raw', 'lonDir', 'groundSpeed', 'groundCourse']):
+        for i, k in enumerate(['fixTime', 'lat_raw', 'latDir', 'lon_raw', 'lonDir', 'groundSpeed', 'groundCourse', 'date']):
             self.GPSDAT[k] = RMCDAT[k]
         return True
 

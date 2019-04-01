@@ -58,6 +58,16 @@ class BalloonMissionComputer():
             self.min_alt = current_alt
         self.prev_alt = current_alt
 
+    def update_datetime(self, gpsdata):
+        if 'date' not in gpsdata:
+            return
+        now = datetime.datetime.now()
+        gpstime = datetime.strptime(gps['date']+ " " + gps['fixTime'], "%d%m%y %H%M%S")
+        diff = int(abs((now-gpstime).total_seconds()/60))
+        if diff > 100 :
+           os.system('date -s %s' % gpstime.isoformat())
+           #todo: verify we have premissions
+
     def send_bulltin(self):
         try:
 	    print "state changed to %s" % self.state
@@ -154,6 +164,7 @@ class BalloonMissionComputer():
                 self.webserver.update(gpsdata, sensordata, self.state)
                 state, triggers = self.webserver.loop(self.timers.get_state())
                 self.timers.handle(state, triggers)
+                self.update_datetime(gpsdata)
 
                 if self.timers.expired("APRS"):
                     if gpsdata['status'] == "fix":
