@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import datetime
 import time
 import thread
 
@@ -176,6 +177,13 @@ class BalloonMissionComputer():
                     self.modem.encode(frame)
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
                     self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
+                    with open(os.path.join(self.tmp_dir, "flight.log"), 'a+') as f:
+                        merged = dict()
+                        merged.update(gpsdata)
+                        merged.update(sensordata)
+                        merged['datatime'] = datetime.datetime.now().isoformat()
+                        f.write(json.dumps(merged, indent=2))
+                        f.write(',\n')
 
                 if self.timers.expired("APRS-META"):
                     frame = self.aprs.create_telem_name_msg(telemetry, self.status_names)
