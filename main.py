@@ -4,6 +4,7 @@ import json
 import datetime
 import time
 import thread
+import subprocess
 
 try:
     # rpi hardware specific
@@ -63,10 +64,17 @@ class BalloonMissionComputer():
         if 'date' not in gpsdata:
             return
         now = datetime.datetime.now()
-        gpstime = datetime.strptime(gps['date']+ " " + gps['fixTime'], "%d%m%y %H%M%S")
+        gpstime = datetime.datetime.strptime(gpsdata['date']+ " " + gpsdata['fixTimeStr'], "%d%m%y %H:%M:%S")
         diff = int(abs((now-gpstime).total_seconds()/60))
         if diff > 100 :
-           os.system('date -s %s' % gpstime.isoformat())
+           print "system time", now
+           print "gps time", gpstime
+           print "updating"
+#           os.system('date -s %s' % gpstime.isoformat())
+	   proc = subprocess.Popen(["date", "-s %s" % gpstime.isoformat()], stdout=subprocess.PIPE, shell=True)
+	   (out, err) = proc.communicate()
+           print "program output:", out
+           print "program error:", err
            #todo: verify we have premissions
 
     def send_bulltin(self):
@@ -230,6 +238,9 @@ class BalloonMissionComputer():
                 exitFlag = True
                 self.gps.stop()
                 break
+            except Exception as x:
+                print "unhandled exception"
+                print x
         print "Done."
 
 

@@ -197,7 +197,7 @@ class Ublox():
 
     def update_files(self, filename="gps"):
         try:
-            self.GPSDAT['fixTimeStr'] = self.GPSDAT['fixTime'][0:2] + ':' + self.GPSDAT['fixTime'][2:4]
+            self.GPSDAT['fixTimeStr'] = self.GPSDAT['fixTime'][0:2] + ':' + self.GPSDAT['fixTime'][2:4] + ':' + self.GPSDAT['fixTime'][4:6]
 
             # Change latitue and longitude to decimal degrees format
             longitude = self.GPSDAT["lon_raw"]
