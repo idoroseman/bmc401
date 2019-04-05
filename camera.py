@@ -38,7 +38,7 @@ class Camera():
             self.image1 = Image.new("RGBA", (320,256))
 
         try:
-            os.system("fswebcam -r 1024X768 -d /dev/video1 -p YUYV --no-banner tmp/usbcam.jpg")
+            os.system("fswebcam -r 1024X768 -d /dev/video1 -p YUYV -S 120 --no-banner tmp/usbcam.jpg")
             self.image2 = Image.open("tmp/usbcam.jpg").convert("RGBA")
         except:
             self.image2 = Image.new("RGBA", (320,256))
