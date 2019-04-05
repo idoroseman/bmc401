@@ -131,6 +131,15 @@ if __name__ == "__main__":
             pass
         except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
             break
+        except Exception as x:
+            print "unhandled exception"
+            print x
+            print "restarting"
+            client.stop()
+            client = APRSISClient(callsign="4X6UB")
+            client.onReceive = a2s.process_aprs
+            client.start()
+
     client.stop()
     print "done"
 
