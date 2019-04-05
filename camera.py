@@ -8,6 +8,8 @@ import datetime
 
 class Camera():
     def __init__(self, path="./images"):
+        self.isFisheye = True
+        self.border = 10 # percent
         # Create the in-memory stream
         self.stream = BytesIO()
         self.camera = PiCamera()
@@ -34,7 +36,10 @@ class Camera():
             # "Rewind" the stream to the beginning so we can read its content
             self.stream.seek(0)
             self.image1 = Image.open(self.stream).convert("RGBA")
-	except:
+            if self.isFisheye:
+                self.image1 = self.zoom(self.image1, self.border)
+	except Exception as x:
+            print x
             self.image1 = Image.new("RGBA", (320,256))
 
         try:
@@ -54,6 +59,16 @@ class Camera():
           self.image = self.image1
         else:
           self.image = self.image2
+
+    def zoom(self, image, border):
+        width, height = image.size   # Get dimensions
+
+	left = (width * border)/100
+	top = (height * border)/100
+	right = (width * (100-border))/100
+	bottom = (height * (100-border))/100
+	print (left, top, right, bottom)
+	return image.crop((left, top, right, bottom))
 
     def resize(self, newSize):
         w, h = self.image.size
