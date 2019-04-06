@@ -67,14 +67,14 @@ class aprs2ssdv():
         if msg == u'':
             return
         if msg.startswith("#"):
-            print msg
+            print "heartbeat:", msg.strip()
             return
         header, payload = msg.split(":", 1)
         tokens = header.split(',')
         src, dest = tokens[0].split(">")
         receiver = tokens[-1]
         if dest == 'APE6UB' :
-            print payload
+            print payload.strip()
             if payload.startswith("{{"):
               self.process_line(receiver, payload)
 
@@ -88,14 +88,14 @@ class aprs2ssdv():
         flags = data[5]
         mcu_offset = data[6]
         mcu_index = data[7] * 0x100 + data[8]
-        print "got packet %4s %4s %s" % ( image_id, packet_id, packet_type)
+        print "-> got packet %4s %4s %s" % ( image_id, packet_id, packet_type)
         hash = "%04s%02s" % (image_id, packet_id)
         if hash not in self.packets:
             self.packets[hash] = {}
         if hash not in self.headers:
             self.headers[hash] = data[0:9]
         elif data[0:9] != self.headers[hash]:
-            print "header ", data[0:9], self.headers[hash]
+            print "header error", data[0:9], self.headers[hash]
 	if image_id not in self.receivers:
             self.receivers[image_id] = ['SSDV over APRS']
         self.packets[hash][packet_type] = data[9:]
