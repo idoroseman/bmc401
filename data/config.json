@@ -11,10 +11,10 @@
     "LED2":10
   },
   "timers":{
-   "APRS": 4,
-   "APRS-META":60,
-   "Capture":10,
-   "Imaging": 40,
+   "APRS": 3,
+   "APRS-META":30,
+   "Capture":5,
+   "Imaging": 10,
    "BIT":  1
   },
   "frequencies":{

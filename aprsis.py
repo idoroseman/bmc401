@@ -11,6 +11,8 @@ class APRSISClient(threading.Thread):
         self.filter = filter
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.callbacks = []
+        self.timeout = 200
+        self.isRunning = True
 
     @property
     def onReceive(self):
@@ -21,9 +23,10 @@ class APRSISClient(threading.Thread):
         self.callbacks.append(client)
 
     def run(self):
+        self.socket.settimeout(self.timeout)
         self.socket.connect((self.addr, self.port))
         self.send("user %s-TS pass -1 vers aprs2ssdv 1.0 filter %s" % (self.callsign, self.filter))
-        while True:
+        while self.isRunning:
             try:
                 data = self.socket.recv(1024)
                 for cb in self.callbacks:
@@ -44,6 +47,7 @@ class APRSISClient(threading.Thread):
         self.socket.send(msg.encode())
 
     def close(self):
+        self.isRunning = False
         self.socket.close()
 
 ########################################################################################################################
@@ -73,5 +77,10 @@ if __name__ == "__main__":
             pass
         except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
             break
+        except Exception as x:
+            client.close()
+            client = APRSISClient(callsign="4X6UB")
+            client.onReceive = onMessage
+            client.start()
     client.stop()
     print "done"
