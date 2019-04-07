@@ -5,7 +5,7 @@ import time
 class APRSISClient(threading.Thread):
     def __init__(self, addr="euro.aprs2.net", port=14580, callsign="N0CALL", filter="u/APE6UB"):
         threading.Thread.__init__(self)
-        # self.port = port
+        self.port = port
         self.addr = addr
         self.callsign = callsign
         self.filter = filter
