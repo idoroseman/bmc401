@@ -74,7 +74,7 @@ class aprs2ssdv():
         src, dest = tokens[0].split(">")
         receiver = tokens[-1]
         if dest == 'APE6UB' :
-            print payload.strip()
+            print "data:", payload.strip()
             if payload.startswith("{{"):
               self.process_line(receiver, payload)
 

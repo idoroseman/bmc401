@@ -9,9 +9,10 @@ class APRSISClient(threading.Thread):
         self.addr = addr
         self.callsign = callsign
         self.filter = filter
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.callbacks = []
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.timeout = 200
+        self.socket.settimeout(self.timeout)
         self.isRunning = True
 
     @property
@@ -22,15 +23,21 @@ class APRSISClient(threading.Thread):
     def onReceive(self, client):
         self.callbacks.append(client)
 
-    def run(self):
-        self.socket.settimeout(self.timeout)
+    def connect(self):
         self.socket.connect((self.addr, self.port))
         self.send("user %s-TS pass -1 vers aprs2ssdv 1.0 filter %s" % (self.callsign, self.filter))
+
+    def run(self):
+        self.connect()
         while self.isRunning:
             try:
                 data = self.socket.recv(1024)
                 for cb in self.callbacks:
                     cb(data.decode('utf-8'))
+            except socket.timeout as msg:
+                print(msg)
+                self.socket.close()
+                self.connect()
             except Exception as x:
                 if 'errno' in x and x.errno == 107: # Connection refused
                     try:
@@ -38,8 +45,7 @@ class APRSISClient(threading.Thread):
                     except:
                         time.sleep(1)
                 else:
-                    print("listener error")
-                    print(x)
+                    print("listener error:", x)
 
 
     def send(self, msg):
@@ -65,7 +71,7 @@ def onMessage(msg):
     tokens = header.split(',')
     src, dest = tokens[0].split(">")
     if dest == 'APE6UB':
-        print payload
+        print "data:", payload
 
 if __name__ == "__main__":
     client = APRSISClient(callsign="4X6UB")
