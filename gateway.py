@@ -76,8 +76,12 @@ class aprs2ssdv():
         if dest == 'APE6UB' :
             print "data:", payload.strip()
             if payload.startswith("{{"):
+              with open("log/ssdv.log","a+") as f:
+                 f.write(msg);
               self.process_line(receiver, payload)
-
+            else:
+              with open("log/aprs.log","a+") as f:
+                 f.write(msg)
     def process_line(self, receiver, line):
         data = decode(line[6:])
         packet_type = line[2]
