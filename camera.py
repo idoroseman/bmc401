@@ -100,16 +100,16 @@ class Camera():
             draw.text((10, 190), "Lon %2.4f" % gps['lon'], yellow, font)
         else:
             draw.text((10, 175), "GPS %s" % gps['status'], yellow, font)
-            draw.text((10, 205), "Alt %d" % float(gps['alt']), yellow, font)
-            draw.text((10, 220), "%4.1fhPa" % sensors['barometer'], yellow, font)
-            draw.text((100, 205), u"%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
-            draw.text((100, 220), u"%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
+        draw.text((10, 205), "Alt %d" % float(gps['alt']), yellow, font)
+        draw.text((10, 220), "%4.1fhPa" % sensors['barometer'], yellow, font)
+        draw.text((100, 205), u"%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
+        draw.text((100, 220), u"%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
         # logo
         self.image.paste(self.logo, (220, 130), self.mask)
         if self.cam_id == 0:
-            draw.text((145, 175), "^", yellow, font)
+            draw.text((135, 175), "V", yellow, font)
         elif self.cam_id == 1:
-            draw.text((145, 175), "<", yellow, font)
+            draw.text((135, 175), ">", yellow, font)
 
         del draw
         self.image = Image.alpha_composite(self.image, layer)

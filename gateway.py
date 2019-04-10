@@ -132,9 +132,9 @@ if __name__ == "__main__":
     client.onReceive = a2s.process_aprs
     client.start()
     # connect to local tnc
-    kiss = KISS(host='aprs-igate.local')
-    kiss.onReceive = a2s.process_aprs
-    kiss.start()
+#    kiss = KISS(host='aprs-igate.local')
+#    kiss.onReceive = a2s.process_aprs
+#    kiss.start()
 
     print "started"
     while True:
