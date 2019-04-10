@@ -22,10 +22,16 @@ class APRSISClient(threading.Thread):
         self.callbacks.append(client)
 
     def connect(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(self.timeout)
-        self.socket.connect((self.addr, self.port))
-        self.send("user %s-TS pass -1 vers aprs2ssdv 1.0 filter %s" % (self.callsign, self.filter))
+        connected=False
+        while not connected:
+          try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(self.timeout)
+            self.socket.connect((self.addr, self.port))
+            self.send("user %s-TS pass -1 vers aprs2ssdv 1.0 filter %s" % (self.callsign, self.filter))
+            connected = True
+          except Exception as x:
+            time.sleep(5)
 
     def run(self):
         self.connect()
