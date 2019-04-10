@@ -53,7 +53,7 @@ class APRSISClient(threading.Thread):
                 else:
                     print("listener error:", x)
 
-
+    # 
     def send(self, msg):
         msg += "\r\n"
         self.socket.send(msg.encode())

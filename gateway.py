@@ -4,6 +4,7 @@ import datetime
 import base64
 import binascii
 from aprsis import APRSISClient
+from kiss import KISS
 
 # code based on work by
 #   https://github.com/DL7AD/pecanpico9/blob/3008ff27fe6a80bf22438779077a0475d33bd389/decoder/decoder.py
@@ -100,8 +101,8 @@ class aprs2ssdv():
             self.headers[hash] = data[0:9]
         elif data[0:9] != self.headers[hash]:
             print "header error", data[0:9], self.headers[hash]
-	if image_id not in self.receivers:
-            self.receivers[image_id] = ['SSDV over APRS']
+        if image_id not in self.receivers:
+                self.receivers[image_id] = ['SSDV over APRS']
         self.packets[hash][packet_type] = data[9:]
         if receiver not in self.receivers[image_id]:
             self.receivers[image_id] += [receiver]
@@ -126,9 +127,15 @@ class aprs2ssdv():
 
 if __name__ == "__main__":
     a2s = aprs2ssdv('4x6ub')
+    # connect to aprs-is network
     client = APRSISClient(callsign="4X6UB")
     client.onReceive = a2s.process_aprs
     client.start()
+    # connect to local tnc
+    kiss = KISS(host='aprs-igate.local')
+    kiss.onReceive = a2s.process_aprs
+    kiss.start()
+
     print "started"
     while True:
         try:
@@ -139,12 +146,12 @@ if __name__ == "__main__":
             print "unhandled exception"
             print x
             print "restarting"
-            client.stop()
+            client.close()
             client = APRSISClient(callsign="4X6UB")
             client.onReceive = a2s.process_aprs
             client.start()
 
-    client.stop()
+    client.close()
     print "done"
 
 
