@@ -30,7 +30,7 @@ class Camera():
         #self.logo.putdata(newData)
 
     def capture(self):
-     	try:
+        try:
             self.stream.seek(0)
             self.camera.capture(self.stream, format='jpeg')
             # "Rewind" the stream to the beginning so we can read its content
@@ -38,9 +38,14 @@ class Camera():
             self.image1 = Image.open(self.stream).convert("RGBA")
             if self.isFisheye:
                 self.image1 = self.zoom(self.image1, self.border)
-	except Exception as x:
+        except Exception as x:
             print x
             self.image1 = Image.new("RGBA", (320,256))
+            red = (255, 0, 0, 255)
+            draw = ImageDraw.Draw(self.image1)
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 15)
+            draw.text((10,100), "ERROR", red, font);
+            draw.text((10,120), x, red, font);
 
         try:
             os.system("fswebcam -r 1024X768 -d /dev/video1 -p YUYV -S 120 --no-banner tmp/usbcam.jpg")
@@ -55,6 +60,7 @@ class Camera():
 
     def select(self, id):
         print "using camera %s "%id
+        self.cam_id = id
         if id == 0:
           self.image = self.image1
         else:
@@ -62,18 +68,17 @@ class Camera():
 
     def zoom(self, image, border):
         width, height = image.size   # Get dimensions
-
-	left = (width * border)/100
-	top = (height * border)/100
-	right = (width * (100-border))/100
-	bottom = (height * (100-border))/100
-	print (left, top, right, bottom)
-	return image.crop((left, top, right, bottom))
+        left = (width * border)/100
+        top = (height * border)/100
+        right = (width * (100-border))/100
+        bottom = (height * (100-border))/100
+        print (left, top, right, bottom)
+        return image.crop((left, top, right, bottom))
 
     def resize(self, newSize):
         w, h = self.image.size
         w1, h1 = newSize
-	# h1 &= 0xfff0 # image size should be multiple of 16
+    # h1 &= 0xfff0 # image size should be multiple of 16
         w2 = int(w*h1/h)
         left = (w2 - w1)/2
         right = (w2 + w1)/2
@@ -93,14 +98,19 @@ class Camera():
         if gps['status'] == "fix":
             draw.text((10, 175), "Lat %2.4f" % gps['lat'], yellow, font)
             draw.text((10, 190), "Lon %2.4f" % gps['lon'], yellow, font)
-	else:
-	    draw.text((10, 175), "GPS %s" % gps['status'], yellow, font)
-        draw.text((10, 205), "Alt %d" % float(gps['alt']), yellow, font)
-        draw.text((10, 220), "%4.1fhPa" % sensors['barometer'], yellow, font)
-        draw.text((100, 205), u"%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
-        draw.text((100, 220), u"%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
+        else:
+            draw.text((10, 175), "GPS %s" % gps['status'], yellow, font)
+            draw.text((10, 205), "Alt %d" % float(gps['alt']), yellow, font)
+            draw.text((10, 220), "%4.1fhPa" % sensors['barometer'], yellow, font)
+            draw.text((100, 205), u"%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
+            draw.text((100, 220), u"%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
         # logo
         self.image.paste(self.logo, (220, 130), self.mask)
+        if self.cam_id == 0:
+            draw.text((145, 175), "^", yellow, font)
+        elif self.cam_id == 1:
+            draw.text((145, 175), "<", yellow, font)
+
         del draw
         self.image = Image.alpha_composite(self.image, layer)
 
