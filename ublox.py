@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from traceback import print_exc
 import threading
+import math
 import time
 import io
 import fcntl
@@ -148,6 +149,9 @@ class Ublox():
                        "lat_raw":"0.00", "lat": "0.00", "lon_raw":"0.00", "lon": "0.00", "alt": "0",
                        "fixTime": "000000", "FixType": "?", "SatCount": 0,
                        "accentRate": 0, 'groundSpeed':"?", 'groundCourse':"?"}
+        self.sim_alt = 30000 / 2.0
+        self.sim_v = math.pi / (2 * 60 * 60)
+        self.sim_t = 0.0
 
     def start(self):
         if self.bit() == 0:
@@ -197,10 +201,13 @@ class Ublox():
 
     def update_files(self, filename="gps"):
         try:
+            self.sim_t += self.sim_v
+#            print "sim %f %f %f" % (self.sim_v, self.sim_t, self.sim_alt*(1-math.cos(self.sim_t)))
+
             self.GPSDAT['fixTimeStr'] = self.GPSDAT['fixTime'][0:2] + ':' + self.GPSDAT['fixTime'][2:4] + ':' + self.GPSDAT['fixTime'][4:6]
 
             # Change latitue and longitude to decimal degrees format
-            longitude = self.GPSDAT["lon_raw"]
+            longitude = self.GPSDAT["lon_raw"] 
             latitude = self.GPSDAT["lat_raw"]
             # calculate
             degrees_lon = float(longitude[:3])
@@ -211,7 +218,7 @@ class Ublox():
             DD_latitude = degrees_lat + fraction_lat  # latitude (decimal degrees)
             self.GPSDAT['lat'] = DD_latitude
             self.GPSDAT['lon'] = DD_longitude
-            self.GPSDAT['alt'] = float(self.GPSDAT['alt'])
+            self.GPSDAT['alt'] = float(self.GPSDAT['alt_raw']) + self.sim_alt * (1-math.cos(self.sim_t))
         except Exception as x:
             print ("bad data while calc files: %s" % x)
             return
@@ -261,11 +268,11 @@ class Ublox():
                                ['strType', 'fixTime',
                                 'lat_raw', 'latDir', 'lon_raw', 'lonDir',
                                 'fixQual', 'numSat', 'horDil',
-                                'alt', 'altUnit', 'galt', 'galtUnit',
+                                'alt_raw', 'altUnit', 'galt', 'galtUnit',
                                 'DPGS_updt', 'DPGS_ID'])
         if GGADAT["lat_raw"] == "":
             return False
-        for i, k in enumerate(['fixTime', 'lat_raw', 'latDir', 'lon_raw', 'lonDir', 'alt']):
+        for i, k in enumerate(['fixTime', 'lat_raw', 'latDir', 'lon_raw', 'lonDir', 'alt_raw']):
             self.GPSDAT[k] = GGADAT[k]
         return True
 
@@ -297,11 +304,13 @@ class Ublox():
                 self.set_status(im_good)
             try:
 		try:
-                  alt = float(self.GPSDAT["alt"])
+                  alt = float(self.GPSDAT["alt_raw"])
                 except:
-                  print "bad alt %s replacing with %s" %(self.GPSDAT['alt'], self.prev_alt)
+                  print "bad alt %s replacing with %s" %(self.GPSDAT['alt_alt'], self.prev_alt)
                   alt = self.prev_alt
-                  self.GPSDAT['alt'] = self.prev_alt
+                  self.GPSDAT['alt_raw'] = self.prev_alt
+                if abs(alt-self.prev_alt) > 10000:
+                  alt = self.prev_alt
                 now = time.time()
                 delta_time = now - self.lastAltTime
                 if self.lastAltTime == 0:
