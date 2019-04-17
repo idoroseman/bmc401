@@ -218,7 +218,7 @@ class Ublox():
             DD_latitude = degrees_lat + fraction_lat  # latitude (decimal degrees)
             self.GPSDAT['lat'] = DD_latitude
             self.GPSDAT['lon'] = DD_longitude
-            self.GPSDAT['alt'] = float(self.GPSDAT['alt_raw']) + self.sim_alt * (1-math.cos(self.sim_t))
+            self.GPSDAT['alt'] = float(self.GPSDAT['alt_raw']) # + self.sim_alt * (1-math.cos(self.sim_t))
         except Exception as x:
             print ("bad data while calc files: %s" % x)
             return
