@@ -12,10 +12,10 @@
   },
   "timers":{
    "APRS": 3,
-   "APRS-META":30,
-   "Capture":5,
+   "APRS-META":25,
+   "Capture":1,
    "Imaging": 10,
-   "BIT":  1
+   "BIT":  5
   },
   "frequencies":{
     "APRS": 144.800,
