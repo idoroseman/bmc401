@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from traceback import print_exc
 import threading
 import math
@@ -8,7 +8,7 @@ import fcntl
 try:
     import smbus
 except:
-    pass
+    print("error loading smbus")
 
 verbose = False
 printFix = False
@@ -218,7 +218,8 @@ class Ublox():
             DD_latitude = degrees_lat + fraction_lat  # latitude (decimal degrees)
             self.GPSDAT['lat'] = DD_latitude
             self.GPSDAT['lon'] = DD_longitude
-            self.GPSDAT['alt'] = float(self.GPSDAT['alt_raw']) # + self.sim_alt * (1-math.cos(self.sim_t))
+            if 'alt_raw' in self.GPSDAT:
+                self.GPSDAT['alt'] = float(self.GPSDAT['alt_raw']) # + self.sim_alt * (1-math.cos(self.sim_t))
         except Exception as x:
             print(("bad data while calc files: %s" % x))
             return
@@ -303,7 +304,7 @@ class Ublox():
             if self.parse_gngga(tokens):
                 self.set_status(im_good)
             try:
-		try:
+                try:
                   alt = float(self.GPSDAT["alt_raw"])
                 except:
                   print("bad alt %s replacing with %s" %(self.GPSDAT['alt_alt'], self.prev_alt))
