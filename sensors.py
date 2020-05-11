@@ -70,7 +70,7 @@ class Sensors():
         except:
           pass
 
-    def reat_alt(self):
+    def read_alt(self):
         return self.sensor.read_altitude(self.patsea)
 
     def read_outside_temp(self):
@@ -88,4 +88,7 @@ class Sensors():
 
 if __name__ == "__main__":
     sensors = Sensors()
-    print((sensors.read_outside_temp()))
+    print("OutTemp = {0:0.2f} *C".format(sensors.read_outside_temp()))
+    print('Temp = {0:0.2f} *C'.format(sensors.read_inside_temp()))
+    print('Pressure = {0:0.2f} Pa'.format(sensors.read_pressure()))
+    print('Altitude = {0:0.2f} m'.format(sensors.read_alt()))
