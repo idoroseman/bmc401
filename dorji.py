@@ -7,9 +7,9 @@ import RPi.GPIO as GPIO
 
 # Pin Definitions
 pins = {
-    'PTT': 17,  # LOW = TX, HIGH = RX
-    'PD': 27,  # LOW = Sleep, HIHJ = Normal
-    'HILO': 22  # LOW = 0.5W, Float = 1W
+    'PTT': 11,  # LOW = TX, HIGH = RX
+    'PD': 5,  # LOW = Sleep, HIHJ = Normal
+    'HILO': 8  # LOW = 0.5W, Float = 1W
 }
 
 
@@ -44,10 +44,11 @@ class Dorji():
     def cmnd(self, data):
         try:
             while True:
-                self.ser.write(data)
+                print(">", data)
+                self.ser.write(data.encode())
                 time.sleep(1)
-                x = self.ser.readline()
-                print(x.strip())
+                x = self.ser.readline().decode("UTF-8")
+                print("<", x.strip())
                 if x.startswith('+') or x.startswith("S="):
                     self.isOK = True
                     break;
@@ -117,6 +118,10 @@ if __name__ == "__main__":
         radio.standby()
     elif sys.argv[1] == "power":
         radio.power(sys.argv[2])
+    elif sys.argv[1] == "test":
+        radio.tx()
+        time.sleep(3)
+        radio.rx()
     else:
         print("unknown")
 
