@@ -3,12 +3,12 @@
   "callsign": "4x6ub",
   "ssid": 11,
   "pins": {
-    "PTT": 17,
-    "PD": 27,
-    "HILO": 22,
-    "BUZZER": 13,
-    "LED1": 9,
-    "LED2":10
+    "PTT": 11,
+    "PD": 5,
+    "HILO": 8,
+    "BUZZER": 20,
+    "LED1": 17,
+    "LED2":27
   },
   "timers":{
    "APRS": 3,
