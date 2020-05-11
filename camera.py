@@ -39,7 +39,7 @@ class Camera():
             if self.isFisheye:
                 self.image1 = self.zoom(self.image1, self.border)
         except Exception as x:
-            print x
+            print(x)
             self.image1 = Image.new("RGBA", (320,256))
             red = (255, 0, 0, 255)
             draw = ImageDraw.Draw(self.image1)
@@ -59,7 +59,7 @@ class Camera():
         self.image2.save(os.path.join(self.basepath, filename + "-cam2.jpg"), "JPEG")
 
     def select(self, id):
-        print "using camera %s "%id
+        print("using camera %s "%id)
         self.cam_id = id
         if id == 0:
           self.image = self.image1
@@ -72,7 +72,7 @@ class Camera():
         top = (height * border)/100
         right = (width * (100-border))/100
         bottom = (height * (100-border))/100
-        print (left, top, right, bottom)
+        print((left, top, right, bottom))
         return image.crop((left, top, right, bottom))
 
     def resize(self, newSize):
@@ -102,8 +102,8 @@ class Camera():
             draw.text((10, 175), "GPS %s" % gps['status'], yellow, font)
         draw.text((10, 205), "Alt %d" % float(gps['alt']), yellow, font)
         draw.text((10, 220), "%4.1fhPa" % sensors['barometer'], yellow, font)
-        draw.text((100, 205), u"%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
-        draw.text((100, 220), u"%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
+        draw.text((100, 205), "%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
+        draw.text((100, 220), "%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
         # logo
         self.image.paste(self.logo, (220, 130), self.mask)
         if self.cam_id == 0:

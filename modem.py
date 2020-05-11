@@ -57,7 +57,7 @@ class AFSK():
             self.wav.playtone(self.freqs[bit], self.bit_durration)
 
         end_time = time.time()
-        print "encoding %s messages took %s seconds" % (message_count, end_time-start_time)
+        print("encoding %s messages took %s seconds" % (message_count, end_time-start_time))
 
     def write_bit(self, Bit, BitStuffing):
         if (BitStuffing):

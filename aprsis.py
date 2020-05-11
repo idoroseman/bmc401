@@ -51,7 +51,7 @@ class APRSISClient(threading.Thread):
                     except:
                         time.sleep(1)
                 else:
-                    print("listener error:", x)
+                    print(("listener error:", x))
 
     # 
     def send(self, msg):
@@ -68,22 +68,22 @@ def onMessage(msg):
     # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{KAAJt7FN/C"Kb^{/!R=^:POi#r4J_;x-"RsP68s%/xuXwLt{[p*b}S?bYy4Wu-u/4<h&QOTzP(NY3q`?ubP]KT3RPo%wi2SF)$W$Cb,X_j;awulms{iIap(~;;;HWK^Fw]VM*ntFFxE
     # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{IAANt7F5FuWKA,os%rHvWZn[sY30`:J5&#E1enIE&K_^,q8b{-!Wl[${G,uR5WsaYpz;s+]xUA,FW0^tdO{(Gx-!bxwFL-/NX$wZZurY*.xuc0D<?e}/:&Hs~x9}l&=/~K}&?<3}:ZE
     # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{JAANt7F5FuWJ^levb2Y0?6`<7qSxX1S2~b{;u2<RlXn"[%hR{mKPWg{1D3U.W.~d2Yll(Am+oG9esBbI7"a>Q[sY3Do:gY-P}k/#0d{87oi#V{FpqoOZY5%j)KaW_+rq~;64-c+/3FA
-    if msg == u'' :
+    if msg == '' :
         return
     if msg.startswith("#"):
-        print msg
+        print(msg)
         return
     header, payload = msg.split(":", 1)
     tokens = header.split(',')
     src, dest = tokens[0].split(">")
     if dest == 'APE6UB':
-        print "data:", payload
+        print("data:", payload)
 
 if __name__ == "__main__":
     client = APRSISClient(callsign="4X6UB")
     client.onReceive = onMessage
     client.start()
-    print "started"
+    print("started")
     while True:
         try:
             pass
@@ -95,4 +95,4 @@ if __name__ == "__main__":
             client.onReceive = onMessage
             client.start()
     client.stop()
-    print "done"
+    print("done")

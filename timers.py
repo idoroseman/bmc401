@@ -10,10 +10,10 @@ class Timers():
     def expired(self, id):
         now = time.time()
         if id not in self.state:
-            print "added %s to states" % id
+            print("added %s to states" % id)
             self.state[id] = False
         if id not in self.timeouts:
-            print "added %s to timeouts" % id
+            print("added %s to timeouts" % id)
             self.timeouts[id] = 0
             self.state[id] = False
 
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     timers = Timers({"One": 1, "Five": 5 })
     while True:
         if timers.expired("One"):
-            print "One"
+            print("One")
         if timers.expired("Five"):
-            print "Five"
+            print("Five")
         time.sleep(10)

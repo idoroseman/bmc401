@@ -1,6 +1,6 @@
 #!/usr/bin/python
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from urlparse import urlparse
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse
 import datetime
 
 PORT_NUMBER = 8080
@@ -152,7 +152,7 @@ class WebServer():
         # Create a web server and define the handler to manage the
         # incoming request
         self.server = HTTPServer(('', PORT_NUMBER), myHandler)
-        print 'Started httpserver on port ', PORT_NUMBER
+        print('Started httpserver on port ', PORT_NUMBER)
         self.server.timeout = 1
         # Wait forever for incoming htto requests
         #server.serve_forever()

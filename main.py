@@ -3,7 +3,7 @@ import sys
 import json
 import datetime
 import time
-import thread
+import _thread
 import subprocess
 
 try:
@@ -13,7 +13,7 @@ try:
     from sensors import Sensors
     from camera import Camera
 except Exception as x:
-    print x
+    print(x)
 
 from aprs import APRS
 from modem import AFSK
@@ -67,19 +67,19 @@ class BalloonMissionComputer():
         gpstime = datetime.datetime.strptime(gpsdata['date']+ " " + gpsdata['fixTimeStr'], "%d%m%y %H:%M:%S")
         diff = int(abs((now-gpstime).total_seconds()/60))
         if diff > 100 :
-           print "system time", now
-           print "gps time", gpstime
-           print "updating"
+           print("system time", now)
+           print("gps time", gpstime)
+           print("updating")
 #           os.system('date -s %s' % gpstime.isoformat())
 	   proc = subprocess.Popen(["date", "-s %s" % gpstime.isoformat()], stdout=subprocess.PIPE, shell=True)
 	   (out, err) = proc.communicate()
-           print "program output:", out
-           print "program error:", err
+           print("program output:", out)
+           print("program error:", err)
            #todo: verify we have premissions
 
     def send_bulltin(self):
         try:
-	    print "state changed to %s" % self.state
+	    print("state changed to %s" % self.state)
             frame = self.aprs.create_message_msg("BLN1BALON", "changed state to %s" % self.state)
             self.modem.encode(frame)
             self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
@@ -146,7 +146,7 @@ class BalloonMissionComputer():
 
         self.imaging_counter = 1
         self.state = "init"
-        self.min_alt = sys.maxint
+        self.min_alt = sys.maxsize
         self.max_alt = 0
         self.prev_alt = 0
         self.send_bulltin()
@@ -177,10 +177,10 @@ class BalloonMissionComputer():
 
                 if self.timers.expired("APRS"):
                     if gpsdata['status'] == "fix":
-                        print "sending location"
+                        print("sending location")
                         frame = self.aprs.create_location_msg(gpsdata, telemetry, status_bits)
                     else:
-                        print "sending only telemetry"
+                        print("sending only telemetry")
                         frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
                     self.modem.encode(frame)
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
@@ -217,7 +217,7 @@ class BalloonMissionComputer():
                     if cam_system == 0:
                         self.process_sstv()
                     else:
-                        thread.start_new_thread(self.process_ssdv, () )
+                        _thread.start_new_thread(self.process_ssdv, () )
 
                 if self.timers.expired("PLAY-SSDV"):
                     self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
@@ -239,9 +239,9 @@ class BalloonMissionComputer():
                 self.gps.stop()
                 break
             except Exception as x:
-                print "unhandled exception"
-                print x
-        print "Done."
+                print("unhandled exception")
+                print(x)
+        print("Done.")
 
 
 if __name__ == "__main__":

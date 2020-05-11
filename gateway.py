@@ -59,23 +59,23 @@ class aprs2ssdv():
             "receiver": receivers[self.count % len(receivers)],
         }
         r = requests.post(self.ssdv_url, json=packet_dict)
-        print r,r.text
+        print(r,r.text)
 
     def process_aprs(self, msg):
         # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{KAAJt7FN/C"Kb^{/!R=^:POi#r4J_;x-"RsP68s%/xuXwLt{[p*b}S?bYy4Wu-u/4<h&QOTzP(NY3q`?ubP]KT3RPo%wi2SF)$W$Cb,X_j;awulms{iIap(~;;;HWK^Fw]VM*ntFFxE
         # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{IAANt7F5FuWKA,os%rHvWZn[sY30`:J5&#E1enIE&K_^,q8b{-!Wl[${G,uR5WsaYpz;s+]xUA,FW0^tdO{(Gx-!bxwFL-/NX$wZZurY*.xuc0D<?e}/:&Hs~x9}l&=/~K}&?<3}:ZE
         # 4X6UB-11>APE6UB,WIDE1-1,WIDE2-1,qAO,4X6UB:{{JAANt7F5FuWJ^levb2Y0?6`<7qSxX1S2~b{;u2<RlXn"[%hR{mKPWg{1D3U.W.~d2Yll(Am+oG9esBbI7"a>Q[sY3Do:gY-P}k/#0d{87oi#V{FpqoOZY5%j)KaW_+rq~;64-c+/3FA
-        if msg == u'':
+        if msg == '':
             return
         if msg.startswith("#"):
-            print "heartbeat:", msg.strip()
+            print("heartbeat:", msg.strip())
             return
         header, payload = msg.split(":", 1)
         tokens = header.split(',')
         src, dest = tokens[0].split(">")
         receiver = tokens[-1]
         if dest == 'APE6UB' :
-            print "data:", payload.strip()
+            print("data:", payload.strip())
             if payload.startswith("{{"):
               with open("log/ssdv.log","a+") as f:
                  f.write(msg);
@@ -93,20 +93,20 @@ class aprs2ssdv():
         flags = data[5]
         mcu_offset = data[6]
         mcu_index = data[7] * 0x100 + data[8]
-        print "-> got packet %4s %4s %s" % ( image_id, packet_id, packet_type)
+        print("-> got packet %4s %4s %s" % ( image_id, packet_id, packet_type))
         hash = "%04s%02s" % (image_id, packet_id)
         if hash not in self.packets:
             self.packets[hash] = {}
         if hash not in self.headers:
             self.headers[hash] = data[0:9]
         elif data[0:9] != self.headers[hash]:
-            print "header error", data[0:9], self.headers[hash]
+            print("header error", data[0:9], self.headers[hash])
         if image_id not in self.receivers:
                 self.receivers[image_id] = ['SSDV over APRS']
         self.packets[hash][packet_type] = data[9:]
         if receiver not in self.receivers[image_id]:
             self.receivers[image_id] += [receiver]
-        keys = "".join(self.packets[hash].keys())
+        keys = "".join(list(self.packets[hash].keys()))
         if keys == "IJ":
             packet = self.merge(self.headers[hash], self.packets[hash]['I'], self.packets[hash]['J'])
             self.upload(packet, self.receivers[image_id])
@@ -136,22 +136,22 @@ if __name__ == "__main__":
 #    kiss.onReceive = a2s.process_aprs
 #    kiss.start()
 
-    print "started"
+    print("started")
     while True:
         try:
             pass
         except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
             break
         except Exception as x:
-            print "unhandled exception"
-            print x
-            print "restarting"
+            print("unhandled exception")
+            print(x)
+            print("restarting")
             client.close()
             client = APRSISClient(callsign="4X6UB")
             client.onReceive = a2s.process_aprs
             client.start()
 
     client.close()
-    print "done"
+    print("done")
 
 

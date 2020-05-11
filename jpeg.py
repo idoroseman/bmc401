@@ -133,7 +133,7 @@ class JPEG():
         self.jfif['Y-density'] = (data[10] << 8) | data[11]
         self.jfif['ThumbnailWidth'] = data[12]
         self.jfif['ThumbnailHeight'] = data[13]
-        print self.jfif
+        print(self.jfif)
 
     def parse_sof0(self,data):
         self.frame = {}
@@ -141,12 +141,12 @@ class JPEG():
         self.frame['height'] = (data[1] << 8) | data[2]
         self.frame['width'] = (data[3] << 8) | data[4]
         self.frame['components_count'] = data[5]
-        print "frame", self.frame
+        print("frame", self.frame)
         for i in range(self.frame['components_count']):
             id = data[3*i+6]
             tmp = {'name':self.component_name[id], 'hfactor':(data[3*i+7] >> 4) & 0x04, 'vfactor':data[3*i+7] & 0x04, 'q_tab':data[3*i+8], 'dc_predict':0}
             self.components[id] = tmp
-            print "component %s: %s" % (id, tmp)
+            print("component %s: %s" % (id, tmp))
 
     def parse_dqt(self, data):
         precision = (data[0] >> 4) & 0x0f

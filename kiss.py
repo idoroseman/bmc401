@@ -57,7 +57,7 @@ class KISS(threading.Thread):
 ########################################################################################################################
 
 def onMessage(msg):
-    print msg
+    print(msg)
 
 if __name__ == "__main__":
     kiss = KISS(host='aprs-igate.local')

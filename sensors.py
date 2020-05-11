@@ -88,4 +88,4 @@ class Sensors():
 
 if __name__ == "__main__":
     sensors = Sensors()
-    print(sensors.read_outside_temp())
+    print((sensors.read_outside_temp()))

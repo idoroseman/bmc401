@@ -47,7 +47,7 @@ class Dorji():
                 self.ser.write(data)
                 time.sleep(1)
                 x = self.ser.readline()
-                print x.strip()
+                print(x.strip())
                 if x.startswith('+') or x.startswith("S="):
                     self.isOK = True
                     break;
@@ -55,34 +55,34 @@ class Dorji():
             pass
 
     def init(self):
-        print "radio init"
+        print("radio init")
         self.cmnd('AT+DMOCONNECT\r\n')
 
     def scan(self, freq):
-        print "radio scan %s" % freq
+        print("radio scan %s" % freq)
         self.cmnd("S+%.4f\r\n" % freq)
 
     def freq(self, freq):
-        print "radio freq %s" % freq
+        print("radio freq %s" % freq)
         self.cmnd("AT+DMOSETGROUP=0,%.4f,%.4f,0000,4,0000\r\n" % (freq, freq))
 
     def tx(self):
-        print "radio tx"
+        print("radio tx")
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.LOW)
 
     def rx(self):
-        print "radio rx"
+        print("radio rx")
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
 
     def standby(self):
-        print "radio standby"
+        print("radio standby")
         GPIO.output(self.pin['PD'], GPIO.LOW)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
 
     def power(self, level):
-        print "radio power %s" % level
+        print("radio power %s" % level)
         GPIO.setup(self.pin['HILO'], GPIO.OUT)
         if level == "high":
             GPIO.output(self.pin['HILO'], GPIO.HIGH)
@@ -100,7 +100,7 @@ class Dorji():
 if __name__ == "__main__":
     radio = Dorji(pins)
     if len(sys.argv) == 1:
-        print "no arguments"
+        print("no arguments")
     elif sys.argv[1] == "init":
         radio.init()
     elif sys.argv[1] == "scan":
@@ -118,6 +118,6 @@ if __name__ == "__main__":
     elif sys.argv[1] == "power":
         radio.power(sys.argv[2])
     else:
-        print "unknown"
+        print("unknown")
 
 # GPIO.cleanup() # cleanup all GPIO

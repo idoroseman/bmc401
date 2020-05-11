@@ -97,7 +97,7 @@ class communicationThread(threading.Thread):
             self.onUBLOX(buffer)
 
     def run(self):
-        print "Starting Communication Thread"
+        print("Starting Communication Thread")
         rxNMEA = False
         rxUBLOX = False
         response = ""
@@ -126,9 +126,9 @@ class communicationThread(threading.Thread):
                     rxNMEA = True
                     response = ch
             except Exception as x:
-                print("Exception: %s" % x)
+                print(("Exception: %s" % x))
                 print_exc()
-        print "Exiting Communication Thread"
+        print("Exiting Communication Thread")
 
 
 #########################################################################
@@ -179,7 +179,7 @@ class Ublox():
 
     def set_status(self, new_status):
         if self.GPSDAT['status'] != new_status:
-          print "gps status changed from %s to %s" % (self.GPSDAT['status'], new_status)
+          print("gps status changed from %s to %s" % (self.GPSDAT['status'], new_status))
         self.GPSDAT['status']=new_status
 
     def loop(self):
@@ -220,23 +220,23 @@ class Ublox():
             self.GPSDAT['lon'] = DD_longitude
             self.GPSDAT['alt'] = float(self.GPSDAT['alt_raw']) # + self.sim_alt * (1-math.cos(self.sim_t))
         except Exception as x:
-            print ("bad data while calc files: %s" % x)
+            print(("bad data while calc files: %s" % x))
             return
 
         if printFix:
           print("-----------------")
-          print("Lat %.4f" % self.GPSDAT['lat'])
-          print("Lon %.4f" % self.GPSDAT['lon'])
-          print("Alt %s" % self.GPSDAT["alt"])
-          print("Fix Time %s" % self.GPSDAT['fixTimeStr'])
-          print("Status %s" % self.GPSDAT["status"])
-          print("Nav Mode %s" % self.GPSDAT["navmode"])
-          print("Fix Mode %s" % self.GPSDAT["FixType"])
-          print("satellites %s" % self.GPSDAT["SatCount"])
-          print("ascent rate %s" % self.GPSDAT["accentRate"])
-          print("ground course %s" % self.GPSDAT['groundCourse'])
-          print("ground speed %s" % self.GPSDAT['groundSpeed'])
-          print
+          print(("Lat %.4f" % self.GPSDAT['lat']))
+          print(("Lon %.4f" % self.GPSDAT['lon']))
+          print(("Alt %s" % self.GPSDAT["alt"]))
+          print(("Fix Time %s" % self.GPSDAT['fixTimeStr']))
+          print(("Status %s" % self.GPSDAT["status"]))
+          print(("Nav Mode %s" % self.GPSDAT["navmode"]))
+          print(("Fix Mode %s" % self.GPSDAT["FixType"]))
+          print(("satellites %s" % self.GPSDAT["SatCount"]))
+          print(("ascent rate %s" % self.GPSDAT["accentRate"]))
+          print(("ground course %s" % self.GPSDAT['groundCourse']))
+          print(("ground speed %s" % self.GPSDAT['groundSpeed']))
+          print()
         self.lastFixTime = time.time()
 
     def tokenize(self, tokens, titles):
@@ -247,9 +247,9 @@ class Ublox():
                 break
             rv[k] = tokens[i]
           except Exception as x:
-            print x
-            print i,k
-            print ",".join(tokens)
+            print(x)
+            print(i,k)
+            print(",".join(tokens))
         return rv
 
     def parse_gnrmc(self, tokens):
@@ -293,20 +293,20 @@ class Ublox():
             pass
         elif cmnd == "GNRMC":
             if verbose:
-              print("fix:  %s" % line)
+              print(("fix:  %s" % line))
             if self.parse_gnrmc(tokens):
                 self.set_status( im_good )
             self.update_files()
         elif cmnd == "GNGGA":
             if verbose:
-                print("fix:  %s" % line)
+                print(("fix:  %s" % line))
             if self.parse_gngga(tokens):
                 self.set_status(im_good)
             try:
 		try:
                   alt = float(self.GPSDAT["alt_raw"])
                 except:
-                  print "bad alt %s replacing with %s" %(self.GPSDAT['alt_alt'], self.prev_alt)
+                  print("bad alt %s replacing with %s" %(self.GPSDAT['alt_alt'], self.prev_alt))
                   alt = self.prev_alt
                   self.GPSDAT['alt_raw'] = self.prev_alt
                 if abs(alt-self.prev_alt) > 10000:
@@ -321,7 +321,7 @@ class Ublox():
                     delta_alt = float(self.GPSDAT["alt"]) - float(self.prev_alt)
                     accent = delta_alt / delta_time
                     if verbose:
-                        print("%s m / %s sec = %s" % (delta_alt, delta_time, accent))
+                        print(("%s m / %s sec = %s" % (delta_alt, delta_time, accent)))
                     self.GPSDAT["accentRate"] = 0.7 * self.GPSDAT["accentRate"] + 0.3 * accent
                     self.lastAltTime = now
                     self.update_files()
@@ -329,11 +329,11 @@ class Ublox():
                 pass
         elif cmnd == "GNGSA":
             if verbose:
-                print("stts: %s" % line)
+                print(("stts: %s" % line))
             self.parse_gngsa(tokens)
         else:
             if verbose:
-                print("nmea: %s" % line)
+                print(("nmea: %s" % line))
 
     def ublox_handler(self, buffer):
         ack = [181, 98, 5, 1, 2, 0, 6, 36, 50, 91]
@@ -344,7 +344,7 @@ class Ublox():
             self.update_files()
         else:
             if verbose:
-                print("ublox: %s" % buffer)
+                print(("ublox: %s" % buffer))
 
 
 #########################################################################
@@ -363,5 +363,5 @@ if __name__ == "__main__":
             gps.stop()
             break
         except Exception as x:
-            print x
-    print "Done."
+            print(x)
+    print("Done.")

@@ -190,5 +190,5 @@ if __name__ == "__main__":
     # with open('data/ssdv.packets', "wb") as f:
     #     for p in raw:
     #         f.write(bytearray(p+'\n'))
-    print len(packets),"packets"
+    print(len(packets),"packets")
 

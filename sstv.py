@@ -153,4 +153,4 @@ if __name__ == "__main__":
     sstv.process()
     end_time = time.time()
     sstv.saveToFile('data/sstv.wav')
-    print "%s seconds" % (end_time-start_time)
+    print("%s seconds" % (end_time-start_time))

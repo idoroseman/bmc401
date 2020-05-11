@@ -24,14 +24,14 @@ class WaveFile():
         self.g_audio = [0] * MAXSAMPLES
 
     def info(self):
-        print "Constants check:"
-        print "      rate = %d" % self.g_rate
-        print "      BITS = %d" % BITS
-        print "    VOLPCT = %d" % VOLPCT
-        print "     scale = %d" % self.g_scale
-        print "   us/samp = %f" % self.g_uspersample
-        print "   2p/rate = %f" % self.g_twopioverrate
-        print
+        print("Constants check:")
+        print("      rate = %d" % self.g_rate)
+        print("      BITS = %d" % BITS)
+        print("    VOLPCT = %d" % VOLPCT)
+        print("     scale = %d" % self.g_scale)
+        print("   us/samp = %f" % self.g_uspersample)
+        print("   2p/rate = %f" % self.g_twopioverrate)
+        print()
 
     # playtone - - Add waveform info to audio data.New waveform data is
     # added in a phase - continuous manner according to the
@@ -65,7 +65,7 @@ class WaveFile():
         blockalign = CHANS * BITS / 8  # total bytes / sample
 
         print("Writing audio data to file.")
-        print("Got a total of [%d] samples." % self.g_samples)
+        print(("Got a total of [%d] samples." % self.g_samples))
 
         # RIFF header
         rv = []

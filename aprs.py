@@ -94,7 +94,7 @@ class APRS():
         frame.add_string(me.ljust(9))
         frame.add_byte(":")
         frame.add_string("PARM.")
-        frame.add_string(",".join(telemetry.keys()))
+        frame.add_string(",".join(list(telemetry.keys())))
         if binary_names is not None:
             frame.add_byte(",")
 	    frame.add_string(",".join(binary_names))
