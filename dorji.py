@@ -4,14 +4,12 @@ import sys
 import time
 import serial
 import RPi.GPIO as GPIO
+import json
 
 # Pin Definitions
-pins = {
-    'PTT': 11,  # LOW = TX, HIGH = RX
-    'PD': 5,  # LOW = Sleep, HIHJ = Normal
-    'HILO': 8  # LOW = 0.5W, Float = 1W
-}
-
+with open('data/config.json') as fin:
+    config = json.load(fin)
+    pins = config['pins']
 
 class Dorji():
     def __init__(self, pins):
@@ -119,9 +117,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "power":
         radio.power(sys.argv[2])
     elif sys.argv[1] == "test":
-        radio.tx()
-        time.sleep(3)
-        radio.rx()
+        radio.play(config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
     else:
         print("unknown")
 
