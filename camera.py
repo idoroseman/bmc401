@@ -5,9 +5,14 @@ from picamera import PiCamera
 from PIL import Image, ImageFont, ImageDraw
 import datetime
 
+USE_WEBCAM = False
 
 class Camera():
     def __init__(self, path="./images"):
+        if not os.path.exists(path):
+            os.mkdir(path)
+        if not os.path.exists('./tmp'):
+            os.mkdir('./tmp')
         self.isFisheye = True
         self.border = 10 # percent
         # Create the in-memory stream
@@ -48,6 +53,8 @@ class Camera():
             draw.text((10,120), x, red, font);
 
         try:
+            if not USE_WEBCAM:
+                raise Exception("no webcam")
             os.system("fswebcam -r 1024X768 -d /dev/video1 -p YUYV -S 120 --no-banner tmp/usbcam.jpg")
             self.image2 = Image.open("tmp/usbcam.jpg").convert("RGBA")
         except:
@@ -115,7 +122,7 @@ class Camera():
         self.image = Image.alpha_composite(self.image, layer)
 
     def saveToFile(self, filename):
-        self.image.save(filename, "JPEG")
+        self.image.convert('RGB').save(filename, "JPEG")
 
     def loadFromFile(self, filename):
         self.image = Image.open(filename)
@@ -124,12 +131,18 @@ class Camera():
 if __name__ == "__main__":
     cam = Camera()
     cam.capture()
+    cam.select(0)
     cam.resize((320, 256))
     #    cam.loadFromFile("images/ssdv.jpg")
     cam.saveToFile("picture")
     gpsdata = {'lat': 32.063331,
                'lon': 34.87216566666667,
-               'alt': 129.7
+               'alt': 129.7,
+               'status': "test"
                }
-    cam.overlay('4x6ub', gpsdata)
-    cam.saveToFile("overlay")
+    sensordata = {'barometer':1000,
+                  'outside_temp':-20,
+                  'inside_temp':17
+               }
+    cam.overlay('4x6ub', gpsdata, sensordata)
+    cam.saveToFile("tmp/overlay.jpg")

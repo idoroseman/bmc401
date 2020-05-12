@@ -23,6 +23,8 @@ from ssdv import SSDV
 from sstv import SSTV
 from webserver import WebServer
 
+CAMERAS = 1
+
 class BalloonMissionComputer():
 
     def calc_status_bits(self, gpsdata, sensordata):
@@ -204,14 +206,14 @@ class BalloonMissionComputer():
 
                 if self.timers.expired("Snapshot"):
                     self.imaging_counter += 1
-                    cam_select = self.imaging_counter % 2
+                    cam_select = self.imaging_counter % CAMERAS
                     self.capture_image(archive=False)
                     self.prep_image(cam_select, gpsdata, sensordata)
 
                 if self.timers.expired("Imaging"):
                     self.imaging_counter += 1
-                    cam_select = self.imaging_counter % 2
-                    cam_system = self.imaging_counter % 3
+                    cam_select = self.imaging_counter % CAMERAS
+                    cam_system = self.imaging_counter % (CAMERAS+1)
                     self.capture_image(archive=False)
                     self.prep_image(cam_select, gpsdata, sensordata)
                     if cam_system == 0:

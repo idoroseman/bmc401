@@ -20,6 +20,7 @@ new features include:
     sudo apt-get install wiringpi
     sudo apt-get install python3-picamera
     sudo apt-get install python3-pil
+    sudo apt-get install fswebcam
     pip3 install pyserial
     
 ### installing adafruit bmp085 support
