@@ -118,6 +118,8 @@ if __name__ == "__main__":
         radio.power(sys.argv[2])
     elif sys.argv[1] == "test":
         radio.play(config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
+    elif sys.argv[1] == "play":
+        radio.play(config['frequencies']['APRS'], sys.argv[2])
     else:
         print("unknown")
 

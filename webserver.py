@@ -25,7 +25,7 @@ gpsdata = {'status': 'fix',
 telemetry = {'Satellites':4,
          'outside_temp':0,
          'inside_temp':0,
-         'Pressure':1024,
+         'barometer':1024,
          'Battery':5 }
 
 state = {}
@@ -55,9 +55,9 @@ class myHandler(BaseHTTPRequestHandler):
             self.wfile.write(f.read())
             f.close()
             return
-	elif self.path.endswith(".ico"):
-	    self.send_response(404)
-	    self.end_headers()
+        elif self.path.endswith(".ico"):
+            self.send_response(404)
+            self.end_headers()
             return
         else:
 
@@ -144,7 +144,7 @@ class myHandler(BaseHTTPRequestHandler):
             </body>
             </html>
             """
-            self.wfile.write(rv)
+            self.wfile.write(rv.encode('utf-8'))
             return
 
 class WebServer():
