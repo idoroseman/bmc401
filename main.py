@@ -73,15 +73,15 @@ class BalloonMissionComputer():
            print("gps time", gpstime)
            print("updating")
 #           os.system('date -s %s' % gpstime.isoformat())
-	   proc = subprocess.Popen(["date", "-s %s" % gpstime.isoformat()], stdout=subprocess.PIPE, shell=True)
-	   (out, err) = proc.communicate()
+           proc = subprocess.Popen(["date", "-s %s" % gpstime.isoformat()], stdout=subprocess.PIPE, shell=True)
+           (out, err) = proc.communicate()
            print("program output:", out)
            print("program error:", err)
            #todo: verify we have premissions
 
     def send_bulltin(self):
         try:
-	    print("state changed to %s" % self.state)
+            print("state changed to %s" % self.state)
             frame = self.aprs.create_message_msg("BLN1BALON", "changed state to %s" % self.state)
             self.modem.encode(frame)
             self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))

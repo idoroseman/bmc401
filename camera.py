@@ -62,8 +62,8 @@ class Camera():
 
     def archive(self):
         filename = datetime.datetime.now().strftime("%Y-%m-%d-%H%M")
-        self.image1.save(os.path.join(self.basepath, filename + "-cam1.jpg"), "JPEG")
-        self.image2.save(os.path.join(self.basepath, filename + "-cam2.jpg"), "JPEG")
+        self.image1.convert('RGB').save(os.path.join(self.basepath, filename + "-cam1.jpg"), "JPEG")
+        self.image2.convert('RGB').save(os.path.join(self.basepath, filename + "-cam2.jpg"), "JPEG")
 
     def select(self, id):
         print("using camera %s "%id)
@@ -79,7 +79,7 @@ class Camera():
         top = (height * border)/100
         right = (width * (100-border))/100
         bottom = (height * (100-border))/100
-        print((left, top, right, bottom))
+        # print(left, top, right, bottom)
         return image.crop((left, top, right, bottom))
 
     def resize(self, newSize):
