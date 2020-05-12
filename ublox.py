@@ -10,7 +10,7 @@ try:
 except:
     print("error loading smbus")
 
-verbose = True
+verbose = False
 printFix = False
 im_lost = "lost"
 im_good = "fix"
@@ -264,6 +264,18 @@ class Ublox():
             self.GPSDAT[k] = RMCDAT[k]
         return True
 
+    def parse_gngll(self, tokens):
+        GGADAT = self.tokenize(tokens,
+                               ['strType', 
+                                'lat_raw', 'latDir', 'lon_raw', 'lonDir',
+                                'fixTime', 'status', 'modeInd'
+                               ])
+        if GGADAT["lat_raw"] == "":
+            return False
+        for i, k in enumerate(['fixTime', 'lat_raw', 'latDir', 'lon_raw', 'lonDir']):
+            self.GPSDAT[k] = GGADAT[k]
+        return True
+
     def parse_gngga(self, tokens):
         GGADAT = self.tokenize(tokens,
                                ['strType', 'fixTime',
@@ -300,6 +312,11 @@ class Ublox():
             if self.parse_gnrmc(tokens):
                 self.set_status( im_good )
             self.update_files()
+        elif cmnd in ["GNGLL","GPGLL"]:
+            if verbose:
+                print("fix:  %s" % line)
+            if self.parse_gngll(tokens):
+                self.set_status(im_good)
         elif cmnd == "GNGGA":
             if verbose:
                 print(("fix:  %s" % line))
