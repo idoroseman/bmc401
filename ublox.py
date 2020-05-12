@@ -10,7 +10,7 @@ try:
 except:
     print("error loading smbus")
 
-verbose = False
+verbose = True
 printFix = False
 im_lost = "lost"
 im_good = "fix"
@@ -61,13 +61,13 @@ class communicationThread(threading.Thread):
         while ch == 255:
             try:
                 if self.exitFlag:
-                    return ch
+                    return ch[0]
                 ch = self.fr.read(1)
                 if ch == 255:
                     time.sleep(0.1)
             except IOError as x:
                 time.sleep(0.1)
-        return ch
+        return ch[0]
 
     def calc_nmea_chksum(self, line):
         calc_cksum = 0
@@ -107,24 +107,24 @@ class communicationThread(threading.Thread):
                 prev_ch = ch
                 ch = self.read_byte()
                 if rxNMEA:
-                    if ch == '\n' or ch == '\r':
+                    if ch in [10, 13]:
                         self.parse_nmea(response)
                         response = ""
                         rxNMEA = False
                     else:
-                        response += chr(ord(ch) & 0x7f)
+                        response += chr(ch & 0x7f)
                 elif rxUBLOX:
-                    response.append(ord(ch))
+                    response.append(ch)
                     if len(response) >= 8 and len(response) == 8 + response[4]:
                         self.parse_ublox(response)
                         response = ""
                         rxUBLOX = False
-                elif ord(prev_ch) == 0xB5 and ord(ch) == 0x62:
+                elif prev_ch == 0xB5 and ch == 0x62:
                     rxUBLOX = True
-                    response = [ord(prev_ch), ord(ch)]
-                elif ch == '$':
+                    response = [prev_ch, ch]
+                elif ch == ord('$'):
                     rxNMEA = True
-                    response = ch
+                    response = chr(ch)
             except Exception as x:
                 print(("Exception: %s" % x))
                 print_exc()
@@ -287,10 +287,12 @@ class Ublox():
         return True
 
     def nmea_handler(self, line):
+        if verbose:
+            print("nmea:"+line)
         self.lastCommTime = time.time()
         tokens = line.split(',')
         cmnd = tokens[0][1:]
-        if cmnd == "GNTXT":
+        if cmnd in ["GNTXT", "GLGSV", "GPGSV"]:
             pass
         elif cmnd == "GNRMC":
             if verbose:
@@ -334,7 +336,7 @@ class Ublox():
             self.parse_gngsa(tokens)
         else:
             if verbose:
-                print(("nmea: %s" % line))
+                print(("nmea unparsed: %s" % line))
 
     def ublox_handler(self, buffer):
         ack = [181, 98, 5, 1, 2, 0, 6, 36, 50, 91]
