@@ -42,7 +42,7 @@ class Dorji():
     def cmnd(self, data):
         try:
             while True:
-                print(">", data)
+                print(">", data.strip())
                 self.ser.write(data.encode())
                 time.sleep(1)
                 x = self.ser.readline().decode("UTF-8")
@@ -91,6 +91,7 @@ class Dorji():
     def play(self, freq, filename):
         self.freq(freq)
         self.tx()
+        time.sleep(1)
         os.system("aplay " + filename)
         self.rx()
 
