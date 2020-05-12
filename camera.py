@@ -134,7 +134,7 @@ if __name__ == "__main__":
     cam.select(0)
     cam.resize((320, 256))
     #    cam.loadFromFile("images/ssdv.jpg")
-    cam.saveToFile("picture")
+    cam.saveToFile("tmp/picture.jpg")
     gpsdata = {'lat': 32.063331,
                'lon': 34.87216566666667,
                'alt': 129.7,
