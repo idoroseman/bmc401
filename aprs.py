@@ -97,7 +97,7 @@ class APRS():
         frame.add_string(",".join(list(telemetry.keys())))
         if binary_names is not None:
             frame.add_byte(",")
-	    frame.add_string(",".join(binary_names))
+            frame.add_string(",".join(binary_names))
         return frame
 
     def create_message_msg(self, to, msg):
@@ -143,10 +143,10 @@ if __name__ == "__main__":
              'Pressure':1024,
              'Battery':5 }
     aprs = APRS('4x6ub', 11)
-    frame = aprs.create_location_msg(gpsdata, "idoroseman.com", telemetry)
+    frame = aprs.create_location_msg(gpsdata, telemetry, '00000000', "idoroseman.com")
     #frame = aprs.create_telem_name_msg(telemetry)
     # print frame.toString()
     modem = AFSK()
     modem.encode(frame)
-    modem.saveToFile('data/aprs.wav')
+    modem.saveToFile('tmp/aprs.wav')
 

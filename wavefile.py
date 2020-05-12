@@ -71,7 +71,7 @@ class WaveFile():
         rv = []
         rv += ['R', 'I', 'F', 'F']
         # total size, audio plus some headers (LE!!)
-        rv += list(unhexlify("%08x" % (totalsize)))[::-1]  # len
+        rv += list(unhexlify("%08x" % int(totalsize)))[::-1]  # len
         rv += ['W', 'A', 'V', 'E']
         # sub chunk 1 (format spec)
         rv += ['f', 'm', 't', ' ']
@@ -80,22 +80,23 @@ class WaveFile():
         rv += list(unhexlify("%04x" % 1))[::-1]  # channels = 1 (LE)
 
         rv += list(unhexlify("%08x" % self.g_rate))[::-1]  # samples / channel / sec (LE!!)
-        rv += list(unhexlify("%08x" % byterate))[::-1]  # bytes total / sec (LE!!)
-        rv += list(unhexlify("%04x" % blockalign))[::-1]  # block alignment (LE!!)
+        rv += list(unhexlify("%08x" % int(byterate)))[::-1]  # bytes total / sec (LE!!)
+        rv += list(unhexlify("%04x" % int(blockalign)))[::-1]  # block alignment (LE!!)
         rv += list(unhexlify("%04x" % BITS))[::-1]  # bits/sample (LE)
 
         # sub chunk 2
 
         rv += ['d', 'a', 't', 'a']  # header
-        rv += list(unhexlify("%08x" % audiosize))[::-1]  # audio bytes total (LE!!)
+        rv += list(unhexlify("%08x" % int(audiosize)))[::-1]  # audio bytes total (LE!!)
 
         # FINALLY, the audio data itself (LE!!)
         for i in range(self.g_samples):
             v = self.g_audio[i]
             rv += [(v & 0xff), ((v >> 8) & 0xff)]
 
+        rv = [x if type(x)==int else ord(x) for x in rv]
         with open(filename, "wb") as fout:
-            fout.write(bytearray(rv))
+            fout.write(bytes(rv))
 
         # no trailer
         print("Done writing to audio file.")
