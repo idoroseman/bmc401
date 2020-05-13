@@ -28,7 +28,7 @@ CAMERAS = 1
 class BalloonMissionComputer():
 
     def calc_status_bits(self, gpsdata, sensordata):
-        bits = [False,
+        bits = [True,
                 False,
                 False,
                 False,
@@ -225,6 +225,8 @@ class BalloonMissionComputer():
                     self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
 
                 if self.timers.expired("PLAY-SSTV"):
+                        self.radio.play(self.config['frequencies']['APRS'], os.path.join("data", 'switching_to_sstv.wav'))
+                        self.radio.play(self.config['frequencies']['SSTV'], os.path.join("data", 'starting_sstv.wav'))
                         self.radio.play(self.config['frequencies']['SSTV'], os.path.join(self.tmp_dir, 'sstv.wav'))
 
                 if self.timers.expired("Buzzer"):

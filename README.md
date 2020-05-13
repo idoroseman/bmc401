@@ -28,3 +28,10 @@ new features include:
     cd Adafruit_Python_BMP/
     sudo python3 setup.py install
     
+### slowing down i2c baudrate
+    sudo nano /boot/config.txt
+find line
+    dtparam=i2c_arm=on
+and change to 
+    dtparam=i2c_arm=on,i2c_arm_baudrate=32000
+
