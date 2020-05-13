@@ -253,7 +253,7 @@ class BalloonMissionComputer():
         print("Done.")
 
     def radio_queue(self, freq, filename):
-        self.audio_q.put({'freq':freq, 'filename':filename})
+        self.radio_q.put({'freq':freq, 'filename':filename})
 
     def radio_worker(self):
         while True:
