@@ -5,10 +5,13 @@ while previous version was a mix of c and bash scripts, this time it's written i
 
 new features include:
 
+2020:
+- ported to python3
+- raspberry pi zero hardware
+
+2019:
 - SSDV over APRS
-
 - better monitoring and build in tests
-
 - web based remote control for ground operation
 
 ## installation prerequisits on raspberry pi
