@@ -37,6 +37,10 @@ start_time = datetime.datetime.now()
 # the browser
 class myHandler(BaseHTTPRequestHandler):
 
+    # override log handler to supress logging
+    def log_message(self, format, *args):
+        return
+
     # Handler for the GET requests
     def do_GET(self):
         if self.path.endswith(".jpg"):
@@ -86,7 +90,7 @@ class myHandler(BaseHTTPRequestHandler):
                 <meta http-equiv="Cache-Control" content="private" />
             </head>
             <body>
-            <h3>Balloon 5 Server</h3>
+            <h3>Balloon 6 Server</h3>
             <table border="0">
             """
 

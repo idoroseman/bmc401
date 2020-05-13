@@ -219,11 +219,15 @@ class BalloonMissionComputer():
                     self.imaging_counter += 1
                     cam_select = self.imaging_counter % CAMERAS
                     cam_system = self.imaging_counter % (CAMERAS+1)
+                    print("imageing")
+                    print(" ".join([str(x) for x in [self.imaging_counter, self.imaging_counter, CAMERAS, cam_select, cam_system]]))
                     self.capture_image(archive=False)
                     self.prep_image(cam_select, gpsdata, sensordata)
                     if cam_system == 0:
+                        print("->sstv")
                         self.process_sstv()
                     else:
+                        print("->ssdv")
                         _thread.start_new_thread(self.process_ssdv, () )
 
                 if self.timers.expired("PLAY-SSDV"):
