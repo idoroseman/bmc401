@@ -22,6 +22,8 @@ from timers import Timers
 from ssdv import SSDV
 from sstv import SSTV
 from webserver import WebServer
+import threading
+import queue
 
 CAMERAS = 1
 
@@ -85,7 +87,7 @@ class BalloonMissionComputer():
             frame = self.aprs.create_message_msg("BLN1BALON", "changed state to %s" % self.state)
             self.modem.encode(frame)
             self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
-            self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
+            self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
         except:
             pass
 
@@ -136,13 +138,16 @@ class BalloonMissionComputer():
         self.gps.start()
         self.radio = Dorji(self.config['pins'])
         self.radio.init()
+        self.radio_q = queue.Queue()
+        self.radio_thread = threading.Thread(target=self.radio_worker)
+        self.radio_thread.start()
         self.timers = Timers(self.config['timers'])
         self.sensors = Sensors()
         self.cam = Camera()
         self.ssdv = SSDV(self.config['callsign'], self.config['ssid'])
         self.sstv = SSTV()
         self.webserver = WebServer()
-        self.radio.play(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
+        self.radio_queue(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
         self.timers.handle({"APRS": True, "APRS-META":True, "Imaging": True,"Buzzer": False, 'Capture': True}, [])
 
@@ -186,7 +191,7 @@ class BalloonMissionComputer():
                         frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
                     self.modem.encode(frame)
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
-                    self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
                     with open(os.path.join(self.tmp_dir, "flight.log"), 'a+') as f:
                         merged = dict()
                         merged.update(gpsdata)
@@ -199,7 +204,7 @@ class BalloonMissionComputer():
                     frame = self.aprs.create_telem_name_msg(telemetry, self.status_names)
                     self.modem.encode(frame)
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
-                    self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
 
                 if self.timers.expired("Capture"):
                     self.capture_image()
@@ -222,12 +227,12 @@ class BalloonMissionComputer():
                         _thread.start_new_thread(self.process_ssdv, () )
 
                 if self.timers.expired("PLAY-SSDV"):
-                    self.radio.play(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
 
                 if self.timers.expired("PLAY-SSTV"):
-                        self.radio.play(self.config['frequencies']['APRS'], os.path.join("data", 'switching_to_sstv.wav'))
-                        self.radio.play(self.config['frequencies']['SSTV'], os.path.join("data", 'starting_sstv.wav'))
-                        self.radio.play(self.config['frequencies']['SSTV'], os.path.join(self.tmp_dir, 'sstv.wav'))
+                        self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'switching_to_sstv.wav'))
+                        self.radio_queue(self.config['frequencies']['SSTV'], os.path.join("data", 'starting_sstv.wav'))
+                        self.radio_queue(self.config['frequencies']['SSTV'], os.path.join(self.tmp_dir, 'sstv.wav'))
 
                 if self.timers.expired("Buzzer"):
                     for i in range(3):
@@ -247,6 +252,14 @@ class BalloonMissionComputer():
                 print(x)
         print("Done.")
 
+    def radio_queue(self, freq, filename):
+        self.audio_q.put({'freq':freq, 'filename':filename})
+
+    def radio_worker(self):
+        while True:
+            item = self.radio_q.get()
+            self.radio.play(item['freq'], item['filename'])
+            self.radio_q.task_done()
 
 if __name__ == "__main__":
     bmc = BalloonMissionComputer()

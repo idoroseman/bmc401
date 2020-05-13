@@ -34,7 +34,9 @@ while previous version was a mix of c and bash scripts, this time it's written i
 ### slowing down i2c baudrate
     sudo nano /boot/config.txt
 find line
+
     dtparam=i2c_arm=on
 and change to 
+
     dtparam=i2c_arm=on,i2c_arm_baudrate=32000
 

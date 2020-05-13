@@ -6,11 +6,6 @@ import serial
 import RPi.GPIO as GPIO
 import json
 
-# Pin Definitions
-with open('data/config.json') as fin:
-    config = json.load(fin)
-    pins = config['pins']
-
 class Dorji():
     def __init__(self, pins):
         self.pin = pins
@@ -95,9 +90,15 @@ class Dorji():
         os.system("aplay " + filename)
         self.rx()
 
+
 ##################################################
 
 if __name__ == "__main__":
+    # Pin Definitions
+    with open('data/config.json') as fin:
+        config = json.load(fin)
+        pins = config['pins']
+
     radio = Dorji(pins)
     if len(sys.argv) == 1:
         print("no arguments")
