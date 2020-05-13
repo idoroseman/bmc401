@@ -3,7 +3,7 @@
 this is a rewrite of my raspberry pi high altitude balloon software.
 while previous version was a mix of c and bash scripts, this time it's written in python (as much as possible) so better data flow is possible
 
-new features include:
+## new features include ##
 
 2020:
 - ported to python3
