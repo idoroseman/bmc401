@@ -11,8 +11,8 @@
     "LED2":27
   },
   "timers":{
-   "APRS": 3,
-   "APRS-META":25,
+   "APRS": 2,
+   "APRS-META":50,
    "Capture":1,
    "Imaging": 10,
    "BIT":  5

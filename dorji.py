@@ -32,16 +32,19 @@ class Dorji():
         )
 
         self.isOK = False
+        self.verbose = False
         self.init()
 
     def cmnd(self, data):
         try:
             while True:
-                print(">", data.strip())
+                if self.verbose:
+                    print(">", data.strip())
                 self.ser.write(data.encode())
                 time.sleep(1)
                 x = self.ser.readline().decode("UTF-8")
-                print("<", x.strip())
+                if self.verbose:
+                    print("<", x.strip())
                 if x.startswith('+') or x.startswith("S="):
                     self.isOK = True
                     break;

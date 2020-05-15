@@ -139,14 +139,14 @@ class SSDV():
             aprs = APRS(self.callsign, self.ssid)
             while True:
                 frame = f.read(256)
-                if frame == '':
+                if len(frame) == 0:
                     break
                 # Sync byte, CRC and FEC of SSDV not transmitted
                 # payload is 205 bytes, so I frame gets 103 bytes, J gets 102 bytes and a \0
                 header = frame [6: 15]
                 dataI = frame[15:15+103]
-                dataJ = frame[15+103:15+205] + '\0'
-                dataK = ''.join([chr(ord(dataI[i]) ^ ord(dataJ[i])) for i in range(len(dataI))])
+                dataJ = frame[15+103:15+205] + b'\0'
+                dataK = bytes([dataI[i] ^ dataJ[i] for i in range(len(dataI))])
                 pkt_base91 = encode(header+dataI)
                 msg = aprs.create_ssdv_msg('I', counter, pkt_base91)
                 counter += 1
@@ -168,27 +168,27 @@ class SSDV():
 
 if __name__ == "__main__":
     from modem import AFSK
-    from camera import Camera
+#    from camera import Camera
 
     ssdv = SSDV('4x6ub', 11)
     modem = AFSK()
-    cam = Camera()
-    cam.capture()
-    cam.resize((320,256))
-    gpsdata = {'lat': 32.063331,
-               'lon': 34.87216566666667,
-               'alt': 129.7
-               }
-    sensordata = {'outside_temp': -12
-                  }
-    cam.overlay('4x6ub', gpsdata, sensordata)
-    cam.saveToFile('tmp/ssdv.jpg')
-    ssdv.convert('tmp/ssdv.jpg', 'tmp/image.ssdv')
-    packets, raw = ssdv.prepare("tmp/image.ssdv")
+#    cam = Camera()
+#    cam.capture()
+#    cam.resize((320,256))
+#    gpsdata = {'lat': 32.063331,
+#               'lon': 34.87216566666667,
+#               'alt': 129.7
+#               }
+#    sensordata = {'outside_temp': -12
+#                  }
+#    cam.overlay('4x6ub', gpsdata, sensordata)
+#    cam.saveToFile('tmp/ssdv.jpg')
+    ssdv.convert('data/testcard.jpg', 'tmp/image.ssdv')
+    packets = ssdv.prepare("tmp/image.ssdv")
+    print(len(packets),"packets")
     modem.encode(packets)
     modem.saveToFile('tmp/ssdv.wav')
     # with open('data/ssdv.packets', "wb") as f:
     #     for p in raw:
     #         f.write(bytearray(p+'\n'))
-    print(len(packets),"packets")
 

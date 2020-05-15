@@ -40,3 +40,19 @@ and change to
 
     dtparam=i2c_arm=on,i2c_arm_baudrate=32000
 
+## building other needed software
+    mkdir utils
+    cd utils
+
+* SSDV *
+    git clone https://github.com/fsphil/ssdv
+    cd ssdv
+    make
+
+* PiSSTV *
+    git clone https://github.com/AgriVision/pisstv
+    cd pisstv
+    sudo apt-get install libgd-dev 
+    sudo apt-get install libmagic-dev 
+    gcc -lm -lgd -lmagic -o pisstv pisstv.c
+
