@@ -55,4 +55,5 @@ class ax25():
     def toString(self):
         return  self.frame + self.calc_crc() 
 
-
+    def __str__(self):
+        return self.frame + self.calc_crc() 

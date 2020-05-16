@@ -117,7 +117,6 @@ class SSDV():
         self.counter += 1
         cmd = 'utils/ssdv/ssdv -e -i %s /home/pi/bmc401/%s /home/pi/bmc401/%s' % (self.counter, src, dest)
         out = subprocess.check_output(cmd, shell=True)
-        print(out)
 
     def prepare(self,filename):
         # 0	Sync Byte	1	0x55
@@ -186,6 +185,8 @@ if __name__ == "__main__":
     ssdv.convert('data/testcard.jpg', 'tmp/image.ssdv')
     packets = ssdv.prepare("tmp/image.ssdv")
     print(len(packets),"packets")
+    with open('tmp/ssdv_packets.txt','w') as f:
+        f.write('\n'.join([str(ax) for ax in packets]))
     modem.encode(packets)
     modem.saveToFile('tmp/ssdv.wav')
     # with open('data/ssdv.packets', "wb") as f:
