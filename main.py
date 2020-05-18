@@ -116,6 +116,12 @@ class BalloonMissionComputer():
         self.sstv.saveToFile(os.path.join(self.tmp_dir, 'sstv.wav'))
         self.timers.handle(None, ["PLAY-SSTV"])
 
+    def gps_reset(self):
+        GPIO.setup(self.config['pins']['GPS_RST'], GPIO.OUT)
+        GPIO.output(self.config['pins']['GPS_RST'], GPIO.LOW)
+        time.sleep(1)
+        GPIO.output(self.config['pins']['GPS_RST'], GPIO.HIGH)
+
     def setup(self):
         # setup
         with open('data/config.json') as fin:
@@ -131,6 +137,8 @@ class BalloonMissionComputer():
         GPIO.setup(self.config['pins']['BUZZER'], GPIO.OUT)
         GPIO.setup(self.config['pins']['LED1'], GPIO.OUT)
         GPIO.setup(self.config['pins']['LED2'], GPIO.OUT)
+
+        self.gps_reset()
 
         self.aprs = APRS(self.config['callsign'], self.config['ssid'], "idoroseman.com")
         self.modem = AFSK()
