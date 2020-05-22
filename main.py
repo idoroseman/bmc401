@@ -105,7 +105,7 @@ class BalloonMissionComputer():
     def process_ssdv(self):
         self.ssdv.convert('tmp/image.jpg', 'tmp/image.ssdv')
         packets = self.ssdv.prepare(os.path.join(self.tmp_dir, "image.ssdv"))
-        self.ssdv.encode(packets, 'tmp/ssdv_packets.txt')
+        self.ssdv.encode(packets, 'tmp/ssdv.wav')
         self.timers.handle(None, ["PLAY-SSDV"])
 
     def process_sstv(self):
