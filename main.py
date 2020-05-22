@@ -105,9 +105,7 @@ class BalloonMissionComputer():
     def process_ssdv(self):
         self.ssdv.convert('tmp/image.jpg', 'tmp/image.ssdv')
         packets = self.ssdv.prepare(os.path.join(self.tmp_dir, "image.ssdv"))
-        modem = AFSK()
-        modem.encode(packets)
-        modem.saveToFile(os.path.join(self.tmp_dir, 'ssdv.wav'))
+        self.ssdv.encode(packets, 'tmp/ssdv_packets.txt')
         self.timers.handle(None, ["PLAY-SSDV"])
 
     def process_sstv(self):
@@ -236,7 +234,7 @@ class BalloonMissionComputer():
                         self.process_sstv()
                     else:
                         print("->ssdv")
-                        _thread.start_new_thread(self.process_ssdv, () )
+                        self.process_ssdv()
 
                 if self.timers.expired("PLAY-SSDV"):
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))

@@ -164,9 +164,12 @@ class SSDV():
 
         return rv
 
-
-
-
+    def encode(self,packets, filename):
+        tmpfilename = "tmp/ssdv_packets.txt"
+        with open(tmpfilename, 'w') as f:
+            f.write('\n'.join([str(p) for p in packets]))
+        cmd = 'utils/aprs-tool/aprs-encode --src %s-%s -i %s -o %s' % (self.callsign, self.ssid, tmpfilename, filename)
+        out = subprocess.check_output(cmd, shell=True)
 
 if __name__ == "__main__":
     from modem import AFSK
