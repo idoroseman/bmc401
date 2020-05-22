@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from traceback import print_exc
 import threading
+import logging
 import math
 import time
 import io
@@ -44,6 +45,8 @@ class communicationThread(threading.Thread):
         fcntl.ioctl(self.fr, I2C_SLAVE, device)
         fcntl.ioctl(self.fw, I2C_SLAVE, device)
         self.exitFlag = False
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     def stop(self):
         self.exitFlag = True
@@ -54,7 +57,7 @@ class communicationThread(threading.Thread):
         try:
             self.fw.write(data)
         except:
-            print("i2c write error")
+            self.logger.error("i2c write error")
 
     def read_byte(self):
         ch = 255
@@ -97,7 +100,7 @@ class communicationThread(threading.Thread):
             self.onUBLOX(buffer)
 
     def run(self):
-        print("Starting Communication Thread")
+        self.logger.info("Starting Communication Thread")
         rxNMEA = False
         rxUBLOX = False
         response = ""
@@ -126,9 +129,9 @@ class communicationThread(threading.Thread):
                     rxNMEA = True
                     response = chr(ch)
             except Exception as x:
-                print(("Exception: %s" % x))
+                self.logger.exception(("Exception: %s" % x))
                 print_exc()
-        print("Exiting Communication Thread")
+        self.logger.info("Exiting Communication Thread")
 
 
 #########################################################################
@@ -179,12 +182,12 @@ class Ublox():
 
     def set_status(self, new_status):
         if self.GPSDAT['status'] != new_status:
-          print("gps status changed from %s to %s" % (self.GPSDAT['status'], new_status))
+          self.logger.info("gps status changed from %s to %s" % (self.GPSDAT['status'], new_status))
         self.GPSDAT['status']=new_status
 
     def loop(self):
         if not self.isInFlightMode:
-            print("set flight mode !")
+            self.logger.info("set flight mode !")
             self.comm_thread.send_bytes(setNavCmnd)
             time.sleep(5)
         elapsed = time.time() - self.lastFixTime
@@ -202,7 +205,7 @@ class Ublox():
     def update_files(self, filename="gps"):
         try:
             self.sim_t += self.sim_v
-#            print "sim %f %f %f" % (self.sim_v, self.sim_t, self.sim_alt*(1-math.cos(self.sim_t)))
+#            self.logger.info( "sim %f %f %f" % (self.sim_v, self.sim_t, self.sim_alt*(1-math.cos(self.sim_t))))
 
             self.GPSDAT['fixTimeStr'] = self.GPSDAT['fixTime'][0:2] + ':' + self.GPSDAT['fixTime'][2:4] + ':' + self.GPSDAT['fixTime'][4:6]
 
@@ -221,23 +224,24 @@ class Ublox():
             if 'alt_raw' in self.GPSDAT:
                 self.GPSDAT['alt'] = float(self.GPSDAT['alt_raw']) # + self.sim_alt * (1-math.cos(self.sim_t))
         except Exception as x:
-            print(("bad data while calc files: %s" % x))
+            self.logger.exception(x)
+            self.logger.error("bad data while calc files")
             return
 
         if printFix:
-          print("-----------------")
-          print(("Lat %.4f" % self.GPSDAT['lat']))
-          print(("Lon %.4f" % self.GPSDAT['lon']))
-          print(("Alt %s" % self.GPSDAT["alt"]))
-          print(("Fix Time %s" % self.GPSDAT['fixTimeStr']))
-          print(("Status %s" % self.GPSDAT["status"]))
-          print(("Nav Mode %s" % self.GPSDAT["navmode"]))
-          print(("Fix Mode %s" % self.GPSDAT["FixType"]))
-          print(("satellites %s" % self.GPSDAT["SatCount"]))
-          print(("ascent rate %s" % self.GPSDAT["accentRate"]))
-          print(("ground course %s" % self.GPSDAT['groundCourse']))
-          print(("ground speed %s" % self.GPSDAT['groundSpeed']))
-          print()
+          self.logger.info("-----------------")
+          self.logger.info("Lat %.4f" % self.GPSDAT['lat'])
+          self.logger.info("Lon %.4f" % self.GPSDAT['lon'])
+          self.logger.info("Alt %s" % self.GPSDAT["alt"])
+          self.logger.info("Fix Time %s" % self.GPSDAT['fixTimeStr'])
+          self.logger.info("Status %s" % self.GPSDAT["status"])
+          self.logger.info("Nav Mode %s" % self.GPSDAT["navmode"])
+          self.logger.info("Fix Mode %s" % self.GPSDAT["FixType"])
+          self.logger.info("satellites %s" % self.GPSDAT["SatCount"])
+          self.logger.info("ascent rate %s" % self.GPSDAT["accentRate"])
+          self.logger.info("ground course %s" % self.GPSDAT['groundCourse'])
+          self.logger.info("ground speed %s" % self.GPSDAT['groundSpeed'])
+          self.logger.info("")
         self.lastFixTime = time.time()
 
     def tokenize(self, tokens, titles):
@@ -248,9 +252,9 @@ class Ublox():
                 break
             rv[k] = tokens[i]
           except Exception as x:
-            print(x)
-            print(i,k)
-            print(",".join(tokens))
+            self.logger.error(i,k)
+            self.logger.error(",".join(tokens))
+            self.logger.exception(x)
         return rv
 
     def parse_gnrmc(self, tokens):
@@ -300,7 +304,7 @@ class Ublox():
 
     def nmea_handler(self, line):
         if verbose:
-            print("nmea:"+line)
+            self.logger.debug("nmea:"+line)
         self.lastCommTime = time.time()
         tokens = line.split(',')
         cmnd = tokens[0][1:]
@@ -308,25 +312,25 @@ class Ublox():
             pass
         elif cmnd == "GNRMC":
             if verbose:
-              print(("fix:  %s" % line))
+              self.logger.debug(("fix:  %s" % line))
             if self.parse_gnrmc(tokens):
                 self.set_status( im_good )
             self.update_files()
         elif cmnd in ["GNGLL","GPGLL"]:
             if verbose:
-                print("fix:  %s" % line)
+                self.logger.debug("fix:  %s" % line)
             if self.parse_gngll(tokens):
                 self.set_status(im_good)
         elif cmnd == "GNGGA":
             if verbose:
-                print(("fix:  %s" % line))
+                self.logger.debug(("fix:  %s" % line))
             if self.parse_gngga(tokens):
                 self.set_status(im_good)
             try:
                 try:
                   alt = float(self.GPSDAT["alt_raw"])
                 except:
-                  print("bad alt %s replacing with %s" %(self.GPSDAT['alt_alt'], self.prev_alt))
+                  self.logger.error("bad alt %s replacing with %s" %(self.GPSDAT['alt_alt'], self.prev_alt))
                   alt = self.prev_alt
                   self.GPSDAT['alt_raw'] = self.prev_alt
                 if abs(alt-self.prev_alt) > 10000:
@@ -341,7 +345,7 @@ class Ublox():
                     delta_alt = float(self.GPSDAT["alt"]) - float(self.prev_alt)
                     accent = delta_alt / delta_time
                     if verbose:
-                        print(("%s m / %s sec = %s" % (delta_alt, delta_time, accent)))
+                        self.logger.debug(("%s m / %s sec = %s" % (delta_alt, delta_time, accent)))
                     self.GPSDAT["accentRate"] = 0.7 * self.GPSDAT["accentRate"] + 0.3 * accent
                     self.lastAltTime = now
                     self.update_files()
@@ -349,22 +353,22 @@ class Ublox():
                 pass
         elif cmnd == "GNGSA":
             if verbose:
-                print(("stts: %s" % line))
+                self.logger.debug(("stts: %s" % line))
             self.parse_gngsa(tokens)
         else:
             if verbose:
-                print(("nmea unparsed: %s" % line))
+                self.logger.debug(("nmea unparsed: %s" % line))
 
     def ublox_handler(self, buffer):
         ack = [181, 98, 5, 1, 2, 0, 6, 36, 50, 91]
         if buffer == ack:
-            print("got ACK !")
+            self.logger.debug("got ACK !")
             self.GPSDAT["navmode"] = "flight"
             self.isInFlightMode = True
             self.update_files()
         else:
             if verbose:
-                print(("ublox: %s" % buffer))
+                self.logger.info(("ublox: %s" % buffer))
 
 
 #########################################################################

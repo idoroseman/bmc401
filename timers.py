@@ -1,4 +1,5 @@
 import time
+import logging
 
 class Timers():
     def __init__(self, items):
@@ -6,14 +7,16 @@ class Timers():
         self.timestamps = {}
         self.state = {}
         self.triggers = []
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     def expired(self, id):
         now = time.time()
         if id not in self.state:
-            print("added %s to states" % id)
+            self.logger.info("added %s to states" % id)
             self.state[id] = False
         if id not in self.timeouts:
-            print("added %s to timeouts" % id)
+            self.logger.info("added %s to timeouts" % id)
             self.timeouts[id] = 0
             self.state[id] = False
 
@@ -37,7 +40,7 @@ class Timers():
                 self.state[item] = state[item]
 
         if type(triggers) is list:
-            print("triggering: ", triggers)
+            self.logger.info("triggering: ", triggers)
             self.triggers += triggers
 
 

@@ -1,6 +1,7 @@
 import os
 import glob
 import time
+import logging
 
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
@@ -17,6 +18,8 @@ import Adafruit_BMP.BMP085 as BMP085
 
 class Sensors():
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.w1_base_dir = '/sys/bus/w1/devices/'
         self.w1_device_folder = glob.glob(self.w1_base_dir + '28*')[0]
         self.w1_device_file = self.w1_device_folder + '/w1_slave'

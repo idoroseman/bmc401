@@ -5,6 +5,7 @@ import datetime
 import time
 import _thread
 import subprocess
+import logging
 
 try:
     # rpi hardware specific
@@ -28,6 +29,9 @@ import queue
 CAMERAS = 1
 
 class BalloonMissionComputer():
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     def calc_status_bits(self, gpsdata, sensordata):
         bits = [True,
@@ -71,19 +75,19 @@ class BalloonMissionComputer():
         gpstime = datetime.datetime.strptime(gpsdata['date']+ " " + gpsdata['fixTimeStr'], "%d%m%y %H:%M:%S")
         diff = int(abs((now-gpstime).total_seconds()/60))
         if diff > 100 :
-           print("system time", now)
-           print("gps time", gpstime)
-           print("updating")
+           self.logger.info("system time %s" % now)
+           self.logger.info("gps time %s" % gpstime)
+           self.logger.info("updating")
 #           os.system('date -s %s' % gpstime.isoformat())
            proc = subprocess.Popen(["date", "-s %s" % gpstime.isoformat()], stdout=subprocess.PIPE, shell=True)
            (out, err) = proc.communicate()
-           print("program output:", out)
-           print("program error:", err)
+           self.logger.info("program output:" % out)
+           self.logger.info("program error:" % err)
            #todo: verify we have premissions
 
     def send_bulltin(self):
         try:
-            print("state changed to %s" % self.state)
+            self.logger.info("state changed to %s" % self.state)
             frame = self.aprs.create_message_msg("BLN1BALON", "changed state to %s" % self.state)
             self.modem.encode(frame)
             self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
@@ -92,48 +96,48 @@ class BalloonMissionComputer():
             pass
 
     def capture_image(self, archive=True):
-        print("capture start")
+        self.logger.debug("capture start")
         self.cam.capture()
         if archive:
           self.cam.archive()
-        print("capture end")
+        self.logger.debug("capture end")
 
     def prep_image(self, id, gpsdata, sensordata):
-        print("image manutulation start")
+        self.logger.debug("image manutulation start")
         self.cam.select(id)
         self.cam.resize((320, 256))
         self.cam.overlay(self.config['callsign'], gpsdata, sensordata)
         self.cam.saveToFile(os.path.join(self.tmp_dir,"image.jpg"))
-        print("image manipulation end")
+        self.logger.debug("image manipulation end")
 
     def process_ssdv(self):
-        print("process ssdv start")
-        print("jpg->ssdv")
+        self.logger.debug("process ssdv start")
+        self.logger.debug("jpg->ssdv")
         self.ssdv.convert('tmp/image.jpg', 'tmp/image.ssdv')
-        print("ssdv->aprs")
+        self.logger.debug("ssdv->aprs")
         packets = self.ssdv.prepare(os.path.join(self.tmp_dir, "image.ssdv"))
-        print("aprs->wav")
+        self.logger.debug("aprs->wav")
         self.ssdv.encode(packets, 'tmp/ssdv.wav')
         self.timers.handle(None, ["PLAY-SSDV"])
-        print("process ssdv end")
+        self.logger.debug("process ssdv end")
 
     def process_sstv(self):
-        print("process sstv start")
+        self.logger.debug("process sstv start")
         self.sstv.image = self.cam.image
         self.sstv.process()
         self.sstv.saveToFile(os.path.join(self.tmp_dir, 'sstv.wav'))
         self.timers.handle(None, ["PLAY-SSTV"])
-        print("process sstv end")
+        self.logger.debug("process sstv end")
 
     def gps_reset(self):
-        print("reset gps")
+        self.logger.warning("reset gps")
         GPIO.setup(self.config['pins']['GPS_RST'], GPIO.OUT)
         GPIO.output(self.config['pins']['GPS_RST'], GPIO.LOW)
         time.sleep(1)
         GPIO.output(self.config['pins']['GPS_RST'], GPIO.HIGH)
 
     def setup(self):
-        print("setup")
+        self.logger.debug("setup")
         # setup
         with open('data/config.json') as fin:
             self.config = json.load(fin)
@@ -178,7 +182,7 @@ class BalloonMissionComputer():
         self.send_bulltin()
 
     def run(self):
-        print("run")
+        self.logger.debug("run")
         telemetry = {}
         exitFlag = False
         while not exitFlag:
@@ -204,10 +208,10 @@ class BalloonMissionComputer():
 
                 if self.timers.expired("APRS"):
                     if gpsdata['status'] == "fix":
-                        print("sending location")
+                        self.logger.debug("sending location")
                         frame = self.aprs.create_location_msg(gpsdata, telemetry, status_bits)
                     else:
-                        print("sending only telemetry")
+                        self.logger.debug("sending only telemetry")
                         frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
                     self.modem.encode(frame)
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
@@ -239,15 +243,14 @@ class BalloonMissionComputer():
                     self.imaging_counter += 1
                     cam_select = self.imaging_counter % CAMERAS
                     cam_system = self.imaging_counter % (CAMERAS+1)
-                    print("imageing")
-                    print(" ".join([str(x) for x in [self.imaging_counter, self.imaging_counter, CAMERAS, cam_select, cam_system]]))
+                    self.logger.info("imageing")
                     self.capture_image(archive=False)
                     self.prep_image(cam_select, gpsdata, sensordata)
                     if cam_system == 0:
-                        print("->sstv")
+                        self.logger.info("->sstv")
                         self.process_sstv()
                     else:
-                        print("->ssdv")
+                        self.logger.info("->ssdv")
                         self.process_ssdv()
 
                 if self.timers.expired("PLAY-SSDV"):
@@ -274,9 +277,8 @@ class BalloonMissionComputer():
                 self.gps.stop()
                 break
             except Exception as x:
-                print("unhandled exception")
-                print(x)
-        print("Done.")
+                self.logger.exception(x)
+        self.logger.info("Done.")
 
     def radio_queue(self, freq, filename):
         self.radio_q.put({'freq':freq, 'filename':filename})

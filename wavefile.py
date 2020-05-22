@@ -1,5 +1,6 @@
 from binascii import unhexlify
 import math
+import logging
 
 RATE = 11025
 MAXRATE = 22050
@@ -22,16 +23,19 @@ class WaveFile():
         temp3 = temp1 * temp2
         self.g_scale = int(temp3)
         self.g_audio = [0] * MAXSAMPLES
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     def info(self):
-        print("Constants check:")
-        print("      rate = %d" % self.g_rate)
-        print("      BITS = %d" % BITS)
-        print("    VOLPCT = %d" % VOLPCT)
-        print("     scale = %d" % self.g_scale)
-        print("   us/samp = %f" % self.g_uspersample)
-        print("   2p/rate = %f" % self.g_twopioverrate)
-        print()
+        self.logger.debug("Constants check:")
+        self.logger.debug("      rate = %d" % self.g_rate)
+        self.logger.debug("      BITS = %d" % BITS)
+        self.logger.debug("    VOLPCT = %d" % VOLPCT)
+        self.logger.debug("     scale = %d" % self.g_scale)
+        self.logger.debug("   us/samp = %f" % self.g_uspersample)
+        self.logger.debug("   2p/rate = %f" % self.g_twopioverrate)
+        self.logger.debug("")
+
 
     # playtone - - Add waveform info to audio data.New waveform data is
     # added in a phase - continuous manner according to the
@@ -64,8 +68,8 @@ class WaveFile():
         byterate = self.g_rate * CHANS * BITS / 8  # audio bytes / sec
         blockalign = CHANS * BITS / 8  # total bytes / sample
 
-        print("Writing audio data to file %s"%filename)
-        print(("Got a total of [%d] samples." % self.g_samples))
+        self.logger.info("Writing audio data to file %s"%filename)
+        self.logger.info("Got a total of [%d] samples." % self.g_samples)
 
         # RIFF header
         rv = []
@@ -99,4 +103,4 @@ class WaveFile():
             fout.write(bytes(rv))
 
         # no trailer
-        print("Done writing to audio file.")
+        self.logger.info("Done writing to audio file.")

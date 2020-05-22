@@ -5,9 +5,13 @@ import time
 import serial
 import RPi.GPIO as GPIO
 import json
+import logging
 
 class Dorji():
     def __init__(self, pins):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+
         self.pin = pins
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
@@ -39,12 +43,12 @@ class Dorji():
         try:
             while True:
                 if self.verbose:
-                    print(">", data.strip())
+                    self.logger.debug(">", data.strip())
                 self.ser.write(data.encode())
                 time.sleep(1)
                 x = self.ser.readline().decode("UTF-8")
                 if self.verbose:
-                    print("<", x.strip())
+                    self.logger.debug("<", x.strip())
                 if x.startswith('+') or x.startswith("S="):
                     self.isOK = True
                     break;
@@ -52,34 +56,34 @@ class Dorji():
             pass
 
     def init(self):
-        print("radio init")
+        self.logger.info("radio init")
         self.cmnd('AT+DMOCONNECT\r\n')
 
     def scan(self, freq):
-        print("radio scan %s" % freq)
+        self.logger.info("radio scan %s" % freq)
         self.cmnd("S+%.4f\r\n" % freq)
 
     def freq(self, freq):
-        print("radio freq %s" % freq)
+        self.logger.info("radio freq %s" % freq)
         self.cmnd("AT+DMOSETGROUP=0,%.4f,%.4f,0000,4,0000\r\n" % (freq, freq))
 
     def tx(self):
-        print("radio tx")
+        self.logger.info("radio tx")
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.LOW)
 
     def rx(self):
-        print("radio rx")
+        self.logger.info("radio rx")
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
 
     def standby(self):
-        print("radio standby")
+        self.logger.info("radio standby")
         GPIO.output(self.pin['PD'], GPIO.LOW)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
 
     def power(self, level):
-        print("radio power %s" % level)
+        self.logger.info("radio power %s" % level)
         GPIO.setup(self.pin['HILO'], GPIO.OUT)
         if level == "high":
             GPIO.output(self.pin['HILO'], GPIO.HIGH)

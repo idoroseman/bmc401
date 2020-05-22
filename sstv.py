@@ -1,12 +1,15 @@
 from PIL import Image
 import time
 from wavefile import WaveFile
+import logging
 
 SSTVImageSize = (320,256)
 
 class SSTV():
     def __init__(self):
         self.image = None
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     def process(self):
         self.image = self.image.convert('RGB')
@@ -26,7 +29,7 @@ class SSTV():
     # this just means lots of calls to playtone().
 
     def addvisheader(self):
-        print("Adding VIS header to audio data.")
+        self.logger.info("Adding VIS header to audio data.")
 
         # bit of silence
         self.playtone(0, 500000)
@@ -66,7 +69,7 @@ class SSTV():
 
     def addvistrailer(self):
 
-        print("Adding VIS trailer to audio data.")
+        self.logger.info("Adding VIS trailer to audio data.")
 
         self.playtone(2300, 300000)
         self.playtone(1200, 10000)
@@ -76,7 +79,7 @@ class SSTV():
         # bit of silence
         self.playtone(0, 500000)
 
-        print("Done adding VIS trailer to audio data.")
+        self.logger.info("Done adding VIS trailer to audio data.")
 
     # toneval -- Map an 8-bit value to a corresponding number between
     #            1500 and 2300, on a simple linear scale. This is used
@@ -105,11 +108,11 @@ class SSTV():
         g = [0] * 320
         b = [0] * 320
 
-        print("Adding image to audio data.")
+        self.logger.info("Adding image to audio data.")
         pixels, lines = SSTVImageSize
         for y in range(lines):
 
-            # printf( "Row [%d] Sample [%d].\n" , y , g_samples ) ;
+            # self.logger.info( "Row [%d] Sample [%d].\n" , y , g_samples ) ;
 
             # read image data
             for x in range(pixels):
@@ -139,7 +142,7 @@ class SSTV():
 
             self.playtone(1500, 572)
 
-        print("Done adding image to audio data.")
+        self.logger.info("Done adding image to audio data.")
 
     def loadFromFile(self, filename):
         self.image = Image.open(filename)

@@ -4,11 +4,14 @@ from io import BytesIO
 from picamera import PiCamera
 from PIL import Image, ImageFont, ImageDraw
 import datetime
+import logging
 
 USE_WEBCAM = False
 
 class Camera():
     def __init__(self, path="./images"):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         if not os.path.exists(path):
             os.mkdir(path)
         if not os.path.exists('./tmp'):
@@ -44,7 +47,7 @@ class Camera():
             if self.isFisheye:
                 self.image1 = self.zoom(self.image1, self.border)
         except Exception as x:
-            print(x)
+            self.logger.exception(x)
             self.image1 = Image.new("RGBA", (320,256))
             red = (255, 0, 0, 255)
             draw = ImageDraw.Draw(self.image1)
@@ -66,7 +69,7 @@ class Camera():
         self.image2.convert('RGB').save(os.path.join(self.basepath, filename + "-cam2.jpg"), "JPEG")
 
     def select(self, id):
-        print("using camera %s "%id)
+        self.logger.info("using camera %s "%id)
         self.cam_id = id
         if id == 0:
           self.image = self.image1
