@@ -20,6 +20,8 @@ class Sensors():
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        logging.getLogger("Adafruit_BMP.BMP085").setLevel(logging.WARNING)
+        logging.getLogger("Adafruit_I2C.Device.Bus.1.Address.0X77").setLevel(logging.WARNING)
         self.w1_base_dir = '/sys/bus/w1/devices/'
         self.w1_device_folder = glob.glob(self.w1_base_dir + '28*')[0]
         self.w1_device_file = self.w1_device_folder + '/w1_slave'

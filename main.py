@@ -30,8 +30,10 @@ CAMERAS = 1
 
 class BalloonMissionComputer():
     def __init__(self):
+        logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s: %(message)s', 
+                            level=logging.DEBUG,
+                            datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
 
     def calc_status_bits(self, gpsdata, sensordata):
         bits = [True,

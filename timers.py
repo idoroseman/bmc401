@@ -40,8 +40,9 @@ class Timers():
                 self.state[item] = state[item]
 
         if type(triggers) is list:
-            self.logger.info("triggering: ", triggers)
-            self.triggers += triggers
+            if len(triggers)>0:
+                self.logger.info("triggering: %s" % triggers)
+                self.triggers += triggers
 
 
 #########################################################################

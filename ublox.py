@@ -35,6 +35,8 @@ device = 0x42
 class communicationThread(threading.Thread):
     def __init__(self, onNMEA, onUBLOX):
         threading.Thread.__init__(self)
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.onNMEA = onNMEA
         self.onUBLOX = onUBLOX
         # setup i2c
@@ -155,6 +157,9 @@ class Ublox():
         self.sim_alt = 30000 / 2.0
         self.sim_v = math.pi / (2 * 60 * 60)
         self.sim_t = 0.0
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     def start(self):
         if self.bit() == 0:
