@@ -2,6 +2,7 @@ from aprs import APRS
 from base91 import encode, decode
 import subprocess
 import os
+import time
 
 # see http://tt7hab.blogspot.co.il/2017/03/ssdv-slow-scan-digital-video.html
 
@@ -168,8 +169,11 @@ class SSDV():
         tmpfilename = "tmp/ssdv_packets.txt"
         with open(tmpfilename, 'w') as f:
             f.write('\n'.join([str(p) for p in packets]))
+        start_time = time.time()
         cmd = 'utils/aprs-tool/aprs-encode --src %s-%s -i %s -o %s' % (self.callsign, self.ssid, tmpfilename, filename)
         out = subprocess.check_output(cmd, shell=True)
+        end_time = time.time()
+        print("rust encoding %s messages took %s seconds" % (len(packets), end_time-start_time))
 
 if __name__ == "__main__":
     from modem import AFSK

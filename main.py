@@ -237,6 +237,8 @@ class BalloonMissionComputer():
                         self.process_ssdv()
 
                 if self.timers.expired("PLAY-SSDV"):
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'starting_ssdv.wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'habhub.wav'))
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
 
                 if self.timers.expired("PLAY-SSTV"):
