@@ -37,6 +37,7 @@ class Timers():
                 self.state[item] = state[item]
 
         if type(triggers) is list:
+            print("triggering: ", triggers)
             self.triggers += triggers
 
 

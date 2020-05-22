@@ -92,35 +92,48 @@ class BalloonMissionComputer():
             pass
 
     def capture_image(self, archive=True):
+        print("capture start")
         self.cam.capture()
         if archive:
           self.cam.archive()
+        print("capture end")
 
     def prep_image(self, id, gpsdata, sensordata):
+        print("image manutulation start")
         self.cam.select(id)
         self.cam.resize((320, 256))
         self.cam.overlay(self.config['callsign'], gpsdata, sensordata)
         self.cam.saveToFile(os.path.join(self.tmp_dir,"image.jpg"))
+        print("image manipulation end")
 
     def process_ssdv(self):
+        print("process ssdv start")
+        print("jpg->ssdv")
         self.ssdv.convert('tmp/image.jpg', 'tmp/image.ssdv')
+        print("ssdv->aprs")
         packets = self.ssdv.prepare(os.path.join(self.tmp_dir, "image.ssdv"))
+        print("aprs->wav")
         self.ssdv.encode(packets, 'tmp/ssdv.wav')
         self.timers.handle(None, ["PLAY-SSDV"])
+        print("process ssdv end")
 
     def process_sstv(self):
+        print("process sstv start")
         self.sstv.image = self.cam.image
         self.sstv.process()
         self.sstv.saveToFile(os.path.join(self.tmp_dir, 'sstv.wav'))
         self.timers.handle(None, ["PLAY-SSTV"])
+        print("process sstv end")
 
     def gps_reset(self):
+        print("reset gps")
         GPIO.setup(self.config['pins']['GPS_RST'], GPIO.OUT)
         GPIO.output(self.config['pins']['GPS_RST'], GPIO.LOW)
         time.sleep(1)
         GPIO.output(self.config['pins']['GPS_RST'], GPIO.HIGH)
 
     def setup(self):
+        print("setup")
         # setup
         with open('data/config.json') as fin:
             self.config = json.load(fin)
@@ -165,6 +178,7 @@ class BalloonMissionComputer():
         self.send_bulltin()
 
     def run(self):
+        print("run")
         telemetry = {}
         exitFlag = False
         while not exitFlag:

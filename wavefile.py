@@ -64,7 +64,7 @@ class WaveFile():
         byterate = self.g_rate * CHANS * BITS / 8  # audio bytes / sec
         blockalign = CHANS * BITS / 8  # total bytes / sample
 
-        print("Writing audio data to file.")
+        print("Writing audio data to file %s"%filename)
         print(("Got a total of [%d] samples." % self.g_samples))
 
         # RIFF header
