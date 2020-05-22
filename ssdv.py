@@ -118,6 +118,9 @@ class SSDV():
         cmd = 'utils/ssdv/ssdv -e -i %s /home/pi/bmc401/%s /home/pi/bmc401/%s' % (self.counter, src, dest)
         out = subprocess.check_output(cmd, shell=True)
 
+    def create_ssdv_msg(self, id, counter, data):
+        return "{{%s%03d%s" % (id, counter, data)
+
     def prepare(self,filename):
         # 0	Sync Byte	1	0x55
         # 1	Packet Type	1	0x66 Normal mode, 0x67 No-FEC mode.
@@ -147,15 +150,15 @@ class SSDV():
                 dataJ = frame[15+103:15+205] + b'\0'
                 dataK = bytes([dataI[i] ^ dataJ[i] for i in range(len(dataI))])
                 pkt_base91 = encode(header+dataI)
-                msg = aprs.create_ssdv_msg('I', counter, pkt_base91)
+                msg = self.create_ssdv_msg('I', counter, pkt_base91)
                 counter += 1
                 rv.append(msg)
                 pkt_base91 = encode(header+dataJ)
-                msg = aprs.create_ssdv_msg('J', counter, pkt_base91)
+                msg = self.create_ssdv_msg('J', counter, pkt_base91)
                 counter += 1
                 rv.append(msg)
                 pkt_base91 = encode(header+dataK)
-                msg = aprs.create_ssdv_msg('K', counter, pkt_base91)
+                msg = self.create_ssdv_msg('K', counter, pkt_base91)
                 counter += 1
                 rv.append(msg)
 
@@ -187,8 +190,8 @@ if __name__ == "__main__":
     print(len(packets),"packets")
     with open('tmp/ssdv_packets.txt','w') as f:
         f.write('\n'.join([str(ax) for ax in packets]))
-    modem.encode(packets)
-    modem.saveToFile('tmp/ssdv.wav')
+#    modem.encode(packets)
+#    modem.saveToFile('tmp/ssdv.wav')
     # with open('data/ssdv.packets', "wb") as f:
     #     for p in raw:
     #         f.write(bytearray(p+'\n'))
