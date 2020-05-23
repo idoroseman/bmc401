@@ -5,7 +5,9 @@ import logging
 import math
 import time
 import io
+import json
 import fcntl
+import RPi.GPIO as GPIO
 try:
     import smbus
 except:
@@ -161,7 +163,22 @@ class Ublox():
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)  # Broadcom pin-numbering scheme
+
+
+    def gps_reset(self):
+        self.logger.warning("GPS Reset!")
+        with open('data/config.json') as fin:
+            config = json.load(fin)
+        self.logger.warning("reset gps")
+        GPIO.setup(config['pins']['GPS_RST'], GPIO.OUT)
+        GPIO.output(config['pins']['GPS_RST'], GPIO.LOW)
+        time.sleep(1)
+        GPIO.output(config['pins']['GPS_RST'], GPIO.HIGH)
+
     def start(self):
+        self.gps_reset()
         if self.bit() == 0:
           self.comm_thread = communicationThread(self.nmea_handler, self.ublox_handler)
           self.comm_thread.start()
@@ -206,6 +223,7 @@ class Ublox():
                 self.set_status( no_comm )
             if self.bit():
                 self.set_status( no_i2c )
+                self.gps_reset()
 
     def update_files(self, filename="gps"):
         try:

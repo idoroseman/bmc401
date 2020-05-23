@@ -1,5 +1,6 @@
 from wavefile import WaveFile
 import time
+import logging
 
 class AFSK():
 
@@ -8,6 +9,8 @@ class AFSK():
         self.baud = baud
         self.freqs = [lfreq, hfreq]
         self.bit_durration = 1000000 / self.baud
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     def saveToFile(self, filename):
         self.wav.saveToFile(filename)
@@ -57,7 +60,7 @@ class AFSK():
             self.wav.playtone(self.freqs[bit], self.bit_durration)
 
         end_time = time.time()
-        print("encoding %s messages took %s seconds" % (message_count, end_time-start_time))
+        self.logger.info("encoding %s messages took %s seconds" % (message_count, end_time-start_time))
 
     def write_bit(self, Bit, BitStuffing):
         if (BitStuffing):

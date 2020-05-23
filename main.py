@@ -71,6 +71,8 @@ class BalloonMissionComputer():
         self.prev_alt = current_alt
 
     def update_datetime(self, gpsdata):
+        if gpsdata['status'] != "fix":
+            return
         if 'date' not in gpsdata:
             return
         now = datetime.datetime.now()
@@ -155,8 +157,6 @@ class BalloonMissionComputer():
         GPIO.setup(self.config['pins']['LED1'], GPIO.OUT)
         GPIO.setup(self.config['pins']['LED2'], GPIO.OUT)
 
-        self.gps_reset()
-
         self.aprs = APRS(self.config['callsign'], self.config['ssid'], "idoroseman.com")
         self.modem = AFSK()
         self.gps = Ublox()
@@ -187,6 +187,7 @@ class BalloonMissionComputer():
         self.logger.debug("run")
         telemetry = {}
         exitFlag = False
+        self.prev_gps_status = ""
         while not exitFlag:
             try:
                 self.gps.loop()
@@ -203,6 +204,12 @@ class BalloonMissionComputer():
                 telemetry['inside_temp'] = sensordata['inside_temp']
                 telemetry['barometer'] = sensordata['barometer']
                 telemetry['battery'] = 0
+                if gpsdata['status'] != self.prev_gps_status:
+                    frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
+                    self.modem.encode(frame)
+                    self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs,wav'))
+                    self.prev_gps_status = gpsdata['status']
                 self.webserver.update(gpsdata, sensordata, self.state)
                 state, triggers = self.webserver.loop(self.timers.get_state())
                 self.timers.handle(state, triggers)
@@ -250,10 +257,10 @@ class BalloonMissionComputer():
                     self.prep_image(cam_select, gpsdata, sensordata)
                     if cam_system == 0:
                         self.logger.info("->sstv")
-                        self.process_sstv()
+                        _thread.start_new_thread(self.process_sstv, () )
                     else:
                         self.logger.info("->ssdv")
-                        self.process_ssdv()
+                        _thread.start_new_thread(self.process_ssdv, () )
 
                 if self.timers.expired("PLAY-SSDV"):
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'starting_ssdv.wav'))

@@ -8,6 +8,7 @@ while previous version was a mix of c and bash scripts, this time it's written i
 2020:
 - ported to python3
 - raspberry pi zero hardware
+- rewrote aprs modem in rust for speed
 
 2019:
 - SSDV over APRS
