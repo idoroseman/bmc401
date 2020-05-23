@@ -142,7 +142,7 @@ class SSDV():
         rv = []
         counter = 0
         with open(filename, "rb") as f:
-            aprs = APRS(self.callsign, self.ssid)
+            # aprs = APRS(self.callsign, self.ssid)
             while True:
                 frame = f.read(256)
                 if len(frame) == 0:
@@ -180,9 +180,14 @@ class SSDV():
 
 if __name__ == "__main__":
     from modem import AFSK
+    from ax25 import ax25
 #    from camera import Camera
 
-    ssdv = SSDV('4x6ub', 11)
+    callsign = "4x6ub"
+    ssid = 11
+    dest = "APE6UB"
+    ssdv = SSDV(callsign, 11)
+    aprs = APRS(callsign, 11)
     modem = AFSK()
 #    cam = Camera()
 #    cam.capture()
@@ -195,13 +200,23 @@ if __name__ == "__main__":
 #                  }
 #    cam.overlay('4x6ub', gpsdata, sensordata)
 #    cam.saveToFile('tmp/ssdv.jpg')
-    ssdv.convert('data/testcard.jpg', 'tmp/image.ssdv')
-    packets = ssdv.prepare("tmp/image.ssdv")
-    print(len(packets),"packets")
-    with open('tmp/ssdv_packets.txt','w') as f:
-        f.write('\n'.join([str(ax) for ax in packets]))
-#    modem.encode(packets)
-#    modem.saveToFile('tmp/ssdv.wav')
+#     ssdv.convert('data/testcard.jpg', 'tmp/image.ssdv')
+#     packets = ssdv.prepare("tmp/image.ssdv")
+#     print(len(packets),"packets")
+#     with open('tmp/ssdv_packets.txt','w') as f:
+#         f.write('\n'.join([str(ax) for ax in packets]))
+    with open('tmp/ssdv_packets.txt') as fin:
+       packets = []
+       for line in fin.readlines():
+           frame = ax25(callsign, ssid, dest, 0, "WIDE1", 1, "WIDE2", 1)
+           frame.add_string(line)
+           packets.append(frame)
+    start_time = time.time()
+    modem.encode(packets)
+    modem.saveToFile('tmp/ssdv.wav')
+    end_time = time.time()
+    print("totla took %s seconds" % (end_time - start_time))
+
     # with open('data/ssdv.packets', "wb") as f:
     #     for p in raw:
     #         f.write(bytearray(p+'\n'))
