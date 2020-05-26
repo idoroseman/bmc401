@@ -152,12 +152,12 @@ class Sensors():
             adctot += read_adc
             time.sleep(0.05)
         read_adc = adctot / reps / 1.0
-        self.logger.debug("adc reading: %.2f" % read_adc)
+#        self.logger.debug("adc reading: %.2f" % read_adc)
 
         # convert analog reading to Volts = ADC * ( 3.33 / 1024 )
         # 3.33 tweak according to the 3v3 measurement on the Pi
         volts = read_adc * (3.33 / 1024.0) * 6
-        self.logger.debug("Battery Voltage: %.2f" % volts)
+#        self.logger.debug("Battery Voltage: %.2f" % volts)
         return volts
 
 if __name__ == "__main__":
