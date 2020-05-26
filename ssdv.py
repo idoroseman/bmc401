@@ -213,9 +213,11 @@ if __name__ == "__main__":
            packets.append(frame)
     start_time = time.time()
     modem.encode(packets)
+    end_time = time.time()
+    print("encoding took %s seconds" % (end_time - start_time))
     modem.saveToFile('tmp/ssdv.wav')
     end_time = time.time()
-    print("totla took %s seconds" % (end_time - start_time))
+    print("totl took %s seconds" % (end_time - start_time))
 
     # with open('data/ssdv.packets', "wb") as f:
     #     for p in raw:

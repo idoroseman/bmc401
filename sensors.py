@@ -6,7 +6,7 @@ import logging
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
 import Adafruit_BMP.BMP085 as BMP085
-
+import RPi.GPIO as GPIO
 
 # see installation instruction on
 #  https://learn.adafruit.com/using-the-bmp085-with-raspberry-pi/using-the-adafruit-bmp-python-library
@@ -15,6 +15,13 @@ import Adafruit_BMP.BMP085 as BMP085
 # print('Pressure = {0:0.2f} Pa'.format(sensor.read_pressure()))
 # print('Altitude = {0:0.2f} m'.format(sensor.read_altitude()))
 # print('Sealevel Pressure = {0:0.2f} Pa'.format(sensor.read_sealevel_pressure()))
+
+# Define SPI Pins
+SPICLK = 22
+SPIMISO = 9
+SPIMOSI = 10
+SPICS = 8
+
 
 class Sensors():
     def __init__(self):
@@ -32,12 +39,19 @@ class Sensors():
           except:
             time.sleep(1)
         self.patsea = 101325.0
+        # ADC
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(SPIMOSI, GPIO.OUT)
+        GPIO.setup(SPIMISO, GPIO.IN)
+        GPIO.setup(SPICLK, GPIO.OUT)
+        GPIO.setup(SPICS, GPIO.OUT)
 
     def get_data(self):
         return {
             'outside_temp': self.read_outside_temp(),
             'inside_temp': self.read_inside_temp(),
-            'barometer': self.read_pressure()
+            'barometer': self.read_pressure(),
+            'battery': self.read_battery(),
         }
 
     def read_temp_raw(self):
@@ -90,6 +104,61 @@ class Sensors():
             temp_f = temp_c * 9.0 / 5.0 + 32.0
             return temp_c
 
+    # modified code based on an adafruit example for mcp3008
+    def readadc(self, adcnum, clockpin, mosipin, misopin, cspin):
+        if ((adcnum > 1) or (adcnum < 0)):
+            return -1
+        if (adcnum == 0):
+            commandout = 0x6
+        else:
+            commandout = 0x7
+
+        GPIO.output(cspin, True)
+
+        GPIO.output(clockpin, False)  # start clock low
+        GPIO.output(cspin, False)  # bring CS low
+
+        commandout <<= 5  # we only need to send 3 bits here
+        for i in range(3):
+            if (commandout & 0x80):
+                GPIO.output(mosipin, True)
+            else:
+                GPIO.output(mosipin, False)
+            commandout <<= 1
+            GPIO.output(clockpin, True)
+            GPIO.output(clockpin, False)
+
+        adcout = 0
+        # read in one empty bit, one null bit and 10 ADC bits
+        for i in range(12):
+            GPIO.output(clockpin, True)
+            GPIO.output(clockpin, False)
+            adcout <<= 1
+            if (GPIO.input(misopin)):
+                adcout |= 0x1
+
+        GPIO.output(cspin, True)
+
+        adcout /= 2  # first bit is 'null' so drop it
+        return adcout
+
+    def read_battery(self):
+        # read the analog pin
+        reps = 10
+        adcnum = 1
+        adctot = 0
+        for i in range(reps):
+            read_adc = self.readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
+            adctot += read_adc
+            time.sleep(0.05)
+        read_adc = adctot / reps / 1.0
+        self.logger.debug("adc reading: %.2f" % read_adc)
+
+        # convert analog reading to Volts = ADC * ( 3.33 / 1024 )
+        # 3.33 tweak according to the 3v3 measurement on the Pi
+        volts = read_adc * (3.33 / 1024.0) * 6
+        self.logger.debug("Battery Voltage: %.2f" % volts)
+        return volts
 
 if __name__ == "__main__":
     sensors = Sensors()
@@ -97,3 +166,4 @@ if __name__ == "__main__":
     print('Temp = {0:0.2f} *C'.format(sensors.read_inside_temp()))
     print('Pressure = {0:0.2f} Pa'.format(sensors.read_pressure()))
     print('Altitude = {0:0.2f} m'.format(sensors.read_alt()))
+    print('Battery = {0:0.2f} m'.format(sensors.read_battery()))
