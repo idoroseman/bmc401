@@ -173,7 +173,7 @@ class SSDV():
         with open(tmpfilename, 'w') as f:
             f.write('\n'.join([str(p) for p in packets]))
         start_time = time.time()
-        cmd = 'utils/aprs-tool/aprs-encode --src %s-%s -i %s -o %s' % (self.callsign, self.ssid, tmpfilename, filename)
+        cmd = 'utils/aprs-tool/aprs-encode --src %s-%s -i %s -o %s' % (self.callsign.upper(), self.ssid, tmpfilename, filename)
         out = subprocess.check_output(cmd, shell=True)
         end_time = time.time()
         self.logger.info("rust encoding %s messages took %s seconds" % (len(packets), end_time-start_time))

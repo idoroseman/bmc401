@@ -3,7 +3,7 @@ Description=balloon mission computer 5 service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python -u main.py
+ExecStart=/usr/bin/python3 -u main.py
 WorkingDirectory=/home/pi/bmc401
 StandardOutput=inherit
 StandardError=inherit

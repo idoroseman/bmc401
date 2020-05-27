@@ -34,6 +34,11 @@ class BalloonMissionComputer():
                             level=logging.DEBUG,
                             datefmt='%Y-%m-%d %H:%M:%S')
         self.logger = logging.getLogger(__name__)
+        hdlr = logging.FileHandler('tmp/program.log')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S')
+        hdlr.setFormatter(formatter)
+        self.logger.addHandler(hdlr) 
 
     def calc_status_bits(self, gpsdata, sensordata):
         bits = [True,
@@ -141,6 +146,9 @@ class BalloonMissionComputer():
         GPIO.output(self.config['pins']['GPS_RST'], GPIO.HIGH)
 
     def setup(self):
+        self.logger.info("--------------------------------------")
+        self.logger.info("   Balloon Mission Computer V4.01     ")
+        self.logger.info("--------------------------------------")
         self.logger.debug("setup")
         # setup
         with open('data/config.json') as fin:
@@ -208,7 +216,7 @@ class BalloonMissionComputer():
                     frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
                     self.modem.encode(frame)
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
-                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs,wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
                     self.prev_gps_status = gpsdata['status']
                 self.webserver.update(gpsdata, sensordata, self.state)
                 state, triggers = self.webserver.loop(self.timers.get_state())

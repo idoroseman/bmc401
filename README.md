@@ -41,6 +41,11 @@ and change to
 
     dtparam=i2c_arm=on,i2c_arm_baudrate=32000
 
+##to auto start as system deamon:
+
+    sudo cp bmc.service /etc/systemd/system
+    sudo systemctl enable bmc.service
+
 ## building other needed software
     mkdir utils
     cd utils
