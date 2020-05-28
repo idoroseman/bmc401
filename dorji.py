@@ -36,24 +36,25 @@ class Dorji():
         )
 
         self.isOK = False
-        self.verbose = False
+        self.verbose = True
         self.init()
 
     def cmnd(self, data):
-        try:
-            while True:
+        while True:
+            try:
                 if self.verbose:
-                    self.logger.debug(">", data.strip())
+                    self.logger.debug(">%s"% data.strip())
                 self.ser.write(data.encode())
                 time.sleep(1)
                 x = self.ser.readline().decode("UTF-8")
                 if self.verbose:
-                    self.logger.debug("<", x.strip())
+                    self.logger.debug("<%s" % x.strip())
                 if x.startswith('+') or x.startswith("S="):
                     self.isOK = True
                     break;
-        except KeyboardInterrupt:
-            pass
+                self.logger.debug("retry cmnd send")
+            except Exception as x:
+                self.logger.exception(x)
 
     def init(self):
         self.logger.info("radio init")
