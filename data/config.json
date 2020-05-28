@@ -5,7 +5,7 @@
   "pins": {
     "PTT": 11,
     "PD": 5,
-    "HILO": 8,
+    "HILO": 13,
     "BUZZER": 20,
     "LED1": 17,
     "LED2":27,

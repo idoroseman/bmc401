@@ -15,7 +15,7 @@ class SSTV():
         self.image = self.image.convert('RGB')
         self.image = self.image.resize(SSTVImageSize, Image.ANTIALIAS)
         self.wav = WaveFile()
-        self.wav.info()
+        # self.wav.info()
         self.playtone = self.wav.playtone
         self.saveToFile = self.wav.saveToFile
 
