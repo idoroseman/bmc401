@@ -2,6 +2,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 import datetime
+import os
 
 PORT_NUMBER = 8080
 
@@ -64,7 +65,6 @@ class myHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         else:
-
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
@@ -81,6 +81,10 @@ class myHandler(BaseHTTPRequestHandler):
                           state[item]=False
                     else:
                         state[query_components[item]] = False
+                elif item=="prefilght":
+                    self.clear_folder('tmp/')
+                    self.clear_folder('images/')
+
             # Send the html message
             rv = ""
             rv += """
@@ -138,7 +142,8 @@ class myHandler(BaseHTTPRequestHandler):
             </table>
             <br/>
             last image <a href="?trigger=Snapshot">recapture</a><br/>
-            <img src="image.jpg" width="320px"/></td></tr>
+            <img src="image.jpg" width="320px"/>
+            <a href="?prefilght">Clear Folders</a>
             </body>
             </html>
             """
@@ -150,6 +155,12 @@ class myHandler(BaseHTTPRequestHandler):
             """
             self.wfile.write(rv.encode('utf-8'))
             return
+
+    def clear_folder(self, folder):
+        files = os.listdir(folder)
+        for f in files:
+            os.delete(folder + f)
+
 
 class WebServer():
     def __init__(self):
