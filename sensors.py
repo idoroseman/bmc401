@@ -158,7 +158,7 @@ class Sensors():
         # 3.33 tweak according to the 3v3 measurement on the Pi
         volts = read_adc * (3.33 / 1024.0) * 6
 #        self.logger.debug("Battery Voltage: %.2f" % volts)
-        return volts
+        return round(volts, 2)
 
 if __name__ == "__main__":
     sensors = Sensors()

@@ -211,7 +211,7 @@ class BalloonMissionComputer():
                 telemetry['outside_temp'] = sensordata['outside_temp']
                 telemetry['inside_temp'] = sensordata['inside_temp']
                 telemetry['barometer'] = sensordata['barometer']
-                telemetry['battery'] = 0
+                telemetry['battery'] = sensordata['battery']
                 if gpsdata['status'] != self.prev_gps_status:
                     frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
                     self.modem.encode(frame)
