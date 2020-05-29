@@ -194,6 +194,7 @@ class BalloonMissionComputer():
     def run(self):
         self.logger.debug("run")
         telemetry = {}
+        telemCoef = { 'SatCount':1, 'outside_temp':10, 'inside_temp':10, 'barometer':1, 'battery':100 }
         exitFlag = False
         self.prev_gps_status = ""
         while not exitFlag:
@@ -207,11 +208,11 @@ class BalloonMissionComputer():
                     gpsdata['alt'] = self.sensors.read_pressure()
                 sensordata = self.sensors.get_data()
                 status_bits = self.calc_status_bits(gpsdata, sensordata)
-                telemetry['Satellites'] = gpsdata['SatCount']
-                telemetry['outside_temp'] = sensordata['outside_temp']
-                telemetry['inside_temp'] = sensordata['inside_temp']
-                telemetry['barometer'] = sensordata['barometer']
-                telemetry['battery'] = sensordata['battery']
+                telemetry['Satellites'] = gpsdata['SatCount'] * telemCoef['SatCount']
+                telemetry['outside_temp'] = sensordata['outside_temp'] * telemCoef['outside_temp']
+                telemetry['inside_temp'] = sensordata['inside_temp'] * telemCoef['inside_temp']
+                telemetry['barometer'] = sensordata['barometer'] * telemCoef['barometer']
+                telemetry['battery'] = sensordata['battery'] * telemCoef['battery']
                 if gpsdata['status'] != self.prev_gps_status:
                     frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
                     self.modem.encode(frame)
@@ -246,6 +247,11 @@ class BalloonMissionComputer():
                     self.modem.encode(frame)
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
+
+                    frame = self.aprs.create_telem_eqns_msg(telemCoef)
+                    self.modem.encode(frame)
+                    self.modem.saveToFile(os.path.join(self.tmp_dir, 'coef.wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'coef.wav'))
 
                 if self.timers.expired("Capture"):
                     self.capture_image()

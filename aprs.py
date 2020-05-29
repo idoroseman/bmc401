@@ -100,6 +100,15 @@ class APRS():
             frame.add_string(",".join(binary_names))
         return frame
 
+    def create_telem_eqns_msg(self, coef):
+        frame = self.create_frame()
+        frame.add_byte(":")
+        me = self.callsign + '-' + str(self.ssid)
+        frame.add_string(me.ljust(9))
+        frame.add_byte(":")
+        frame.add_string("EQNS.")
+        frame.add_string(",".join(["0, %.2f, 0" % 1/x for x in coef]))
+        return frame
     def create_message_msg(self, to, msg):
         frame = self.create_frame()
         frame.add_byte(':')
