@@ -107,8 +107,9 @@ class APRS():
         frame.add_string(me.ljust(9))
         frame.add_byte(":")
         frame.add_string("EQNS.")
-        frame.add_string(",".join(["0, %.2f, 0" % 1/x for x in coef]))
+        frame.add_string(",".join(["0,%.2f,0" % (1/coef[x]) for x in coef]))
         return frame
+
     def create_message_msg(self, to, msg):
         frame = self.create_frame()
         frame.add_byte(':')
