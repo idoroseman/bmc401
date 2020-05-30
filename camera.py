@@ -97,29 +97,33 @@ class Camera():
 
     def overlay(self, callsign, gps, sensors):
         yellow = (255, 255, 0, 255)
+        brown = (165,42,42)
+        green = (0, 255, 0)
         layer = Image.new('RGBA', self.image.size, (255, 255, 255, 0))
         draw = ImageDraw.Draw(layer)
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 15)
         # url & date time
+        draw.text((170+1, 5+1), "idoroseman.com", font=font, fill=brown)
         draw.text((170, 5), "idoroseman.com", font=font, fill=yellow)
+        draw.text((170+1, 20+1), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), brown, font)
         draw.text((170, 20), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), yellow, font)
         # telemetry
-        draw.rectangle(((5, 170), (150, 240)), (255, 255, 255, 90))
+        draw.rectangle(((5, 185), (155, 240)), (255, 255, 255, 90))
         if gps['status'] == "fix":
-            draw.text((10, 175), "Lat %2.4f" % gps['lat'], yellow, font)
-            draw.text((10, 190), "Lon %2.4f" % gps['lon'], yellow, font)
+            draw.text((10, 190), "%2.4f  %2.4f" % (gps['lat'], gps['lon']), yellow, font)
         else:
-            draw.text((10, 175), "GPS %s" % gps['status'], yellow, font)
-        draw.text((10, 205), "Alt %d" % float(gps['alt']), yellow, font)
-        draw.text((10, 220), "%4.1fhPa" % sensors['barometer'], yellow, font)
-        draw.text((100, 205), "%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
-        draw.text((100, 220), "%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
+            draw.text((10, 190), "GPS %s" % gps['status'], yellow, font)
+        draw.text((10, 205), "%dm" % float(gps['alt']), yellow, font)
+        draw.text((80, 205), ("%4.1fmb" % sensors['barometer']).rjust(8), yellow, font)
+        draw.text((10, 220), "%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
+        draw.text((60, 220), "%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
+        draw.text((114, 220), "%1.1fV" % sensors['battery'], yellow, font)
         # logo
         self.image.paste(self.logo, (220, 130), self.mask)
         if self.cam_id == 0:
-            draw.text((135, 175), "V", yellow, font)
+            draw.text((304, 5), "V", green, font)
         elif self.cam_id == 1:
-            draw.text((135, 175), ">", yellow, font)
+            draw.text((304, 5), ">", green, font)
 
         del draw
         self.image = Image.alpha_composite(self.image, layer)
@@ -133,17 +137,17 @@ class Camera():
 
 if __name__ == "__main__":
     cam = Camera()
-    cam.capture()
-    cam.select(0)
-    cam.resize((320, 256))
-    #    cam.loadFromFile("images/ssdv.jpg")
+#    cam.capture()
+#    cam.select(0)
+#    cam.resize((320, 256))
+    cam.loadFromFile("images/ssdv.jpg")
     cam.saveToFile("tmp/picture.jpg")
     gpsdata = {'lat': 32.063331,
                'lon': 34.87216566666667,
-               'alt': 129.7,
+               'alt': 1290.7,
                'status': "test"
                }
-    sensordata = {'barometer':1000,
+    sensordata = {'barometer':999,
                   'outside_temp':-20,
                   'inside_temp':17
                }

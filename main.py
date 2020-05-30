@@ -158,12 +158,16 @@ class BalloonMissionComputer():
 
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir)
+        if not os.path.exists(self.images_dir):
+            os.makedirs(self.images_dir)
+
 
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)  # Broadcom pin-numbering scheme
         GPIO.setup(self.config['pins']['BUZZER'], GPIO.OUT)
         GPIO.setup(self.config['pins']['LED1'], GPIO.OUT)
         GPIO.setup(self.config['pins']['LED2'], GPIO.OUT)
+        GPIO.output(self.config['pins']['LED1'], GPIO.HIGH)
 
         self.aprs = APRS(self.config['callsign'], self.config['ssid'], "idoroseman.com")
         self.modem = AFSK()
@@ -182,14 +186,16 @@ class BalloonMissionComputer():
         self.webserver = WebServer()
         self.radio_queue(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
-        self.timers.handle({"APRS": True, "APRS-META":True, "Imaging": True,"Buzzer": False, 'Capture': True}, [])
+        self.timers.handle({"APRS": True, "APRS-META":True, "Imaging": True,"Buzzer": False, 'Capture': True }, [])
 
+        self.ledState = 1
         self.imaging_counter = 1
         self.state = "init"
         self.min_alt = sys.maxsize
         self.max_alt = 0
         self.prev_alt = 0
         self.send_bulltin()
+        GPIO.output(self.config['pins']['LED1'], GPIO.LOW)
 
     def run(self):
         self.logger.debug("run")
@@ -199,6 +205,8 @@ class BalloonMissionComputer():
         self.prev_gps_status = ""
         while not exitFlag:
             try:
+                self.ledState = 1- self.ledState
+                GPIO.output(self.config['pins']['LED1'], GPIO.HIGH)
                 self.gps.loop()
                 gpsdata = self.gps.get_data()
                 self.calc_balloon_state(gpsdata)
@@ -213,6 +221,7 @@ class BalloonMissionComputer():
                 telemetry['inside_temp'] = sensordata['inside_temp'] * telemCoef['inside_temp']
                 telemetry['barometer'] = sensordata['barometer'] * telemCoef['barometer']
                 telemetry['battery'] = sensordata['battery'] * telemCoef['battery']
+
                 if gpsdata['status'] != self.prev_gps_status:
                     frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
                     self.modem.encode(frame)
@@ -293,6 +302,7 @@ class BalloonMissionComputer():
                         GPIO.output(self.config['pins']['BUZZER'], GPIO.LOW)
                         time.sleep(0.5)
 
+                GPIO.output(self.config['pins']['LED1'], GPIO.LOW)
                 time.sleep(1)
 
             except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
