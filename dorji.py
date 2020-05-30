@@ -72,11 +72,13 @@ class Dorji():
         self.logger.info("radio tx")
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.LOW)
+        GPIO.output(self.pin['LED2'], GPIO.HIGH)
 
     def rx(self):
         self.logger.info("radio rx")
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
+        GPIO.output(self.pin['LED2'], GPIO.LOW)
 
     def standby(self):
         self.logger.info("radio standby")
