@@ -23,6 +23,8 @@ from timers import Timers
 from ssdv import SSDV
 from sstv import SSTV
 from webserver import WebServer
+from watchdog import Watchdog
+
 import threading
 import queue
 
@@ -207,6 +209,7 @@ class BalloonMissionComputer():
             try:
                 self.ledState = 1- self.ledState
                 GPIO.output(self.config['pins']['LED1'], GPIO.HIGH)
+                watchdog = Watchdog(60)
                 self.gps.loop()
                 gpsdata = self.gps.get_data()
                 self.calc_balloon_state(gpsdata)
@@ -303,8 +306,11 @@ class BalloonMissionComputer():
                         time.sleep(0.5)
 
                 GPIO.output(self.config['pins']['LED1'], GPIO.LOW)
+                watchdog.stop()
                 time.sleep(1)
 
+            except Watchdog:
+                self.logger.error("task timedout!")
             except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
                 exitFlag = True
                 self.gps.stop()
