@@ -18,4 +18,4 @@ class Watchdog:
         self.timer.cancel()
 
     def defaultHandler(self):
-        raise self
+        raise Exception()

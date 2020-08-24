@@ -6,7 +6,7 @@ from PIL import Image, ImageFont, ImageDraw
 import datetime
 import logging
 
-USE_WEBCAM = False
+USE_WEBCAM = True
 
 class Camera():
     def __init__(self, path="./images"):

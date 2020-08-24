@@ -28,7 +28,7 @@ from watchdog import Watchdog
 import threading
 import queue
 
-CAMERAS = 1
+CAMERAS = 2
 
 class BalloonMissionComputer():
     def __init__(self):
