@@ -19,6 +19,8 @@ class Dorji():
         GPIO.setup(self.pin['PD'], GPIO.OUT)
         GPIO.setup(self.pin['PTT'], GPIO.OUT)
         GPIO.setup(self.pin['HILO'], GPIO.OUT)
+        GPIO.setup(self.pin['LED2'], GPIO.OUT)
+
         GPIO.output(self.pin['PTT'], GPIO.HIGH)  # LOW = TX, HIGH = RX
         GPIO.output(self.pin['PD'], GPIO.HIGH)  # LOW = Sleep, HIGH = Normal
         GPIO.output(self.pin['HILO'], GPIO.LOW)  # LOW = 0.5W, Float = 1W
