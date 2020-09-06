@@ -38,6 +38,7 @@ class Timers():
         if state is not None:
             for item in state:
                 self.state[item] = state[item]
+#                self.logger.debug("timer %s enabled" % item if state[item] else "timer %s disabled" % item)
 
         if type(triggers) is list:
             if len(triggers)>0:

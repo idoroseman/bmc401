@@ -1,8 +1,6 @@
 { 
   "name": "balloon6",
-  "description": "testing",
   "callsign": "4x6ub",
-  "tagline": "idoroseman.com",
   "ssid": 11,
   "pins": {
     "PTT": 11,
@@ -14,12 +12,11 @@
     "GPS_RST":23
   },
   "timers":{
-   "APRS": 1,
+   "APRS": 2,
    "APRS-META":50,
-   "Capture": 0,
-   "Imaging": 0,
-   "BIT":  5,
-   "Buzzer": 1
+   "Capture":1,
+   "Imaging": 10,
+   "BIT":  5
   },
   "frequencies":{
     "APRS": 144.800,

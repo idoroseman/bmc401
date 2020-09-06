@@ -188,7 +188,9 @@ class BalloonMissionComputer():
         self.webserver = WebServer()
         self.radio_queue(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
-        self.timers.handle({"APRS": True, "APRS-META":True, "Imaging": True,"Buzzer": False, 'Capture': True }, [])
+        for item in ["APRS", "APRS-META", "Imaging", 'Capture']:
+           self.timers.handle({item: self.config['timers'][item] > 0 }, [])
+        self.timers.handle({"Buzzer":False}, [])
 
         self.ledState = 1
         self.imaging_counter = 1
