@@ -31,6 +31,7 @@ import queue
 CAMERAS = 2
 
 class BalloonMissionComputer():
+    # ---------------------------------------------------------------------------
     def __init__(self):
         logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s: %(message)s', 
                             level=logging.DEBUG,
@@ -42,6 +43,7 @@ class BalloonMissionComputer():
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr) 
 
+    #---------------------------------------------------------------------------
     def calc_status_bits(self, gpsdata, sensordata):
         bits = [True,
                 False,
@@ -55,6 +57,7 @@ class BalloonMissionComputer():
 
     status_names = ['gps i2c err', "gps comm err", "gps no fix", "gps ok"]
 
+    # ---------------------------------------------------------------------------
     def calc_balloon_state(self, gpsdata):
         current_alt = float(gpsdata['alt'])
         if self.state == "init" and current_alt > 0:
@@ -77,7 +80,8 @@ class BalloonMissionComputer():
             self.min_alt = current_alt
         self.prev_alt = current_alt
 
-    def update_datetime(self, gpsdata):
+    # ---------------------------------------------------------------------------
+    def update_system_datetime(self, gpsdata):
         if gpsdata['status'] != "fix":
             return
         if 'date' not in gpsdata:
@@ -96,6 +100,7 @@ class BalloonMissionComputer():
            self.logger.info("program error:" % err)
            #todo: verify we have premissions
 
+    # ---------------------------------------------------------------------------
     def send_bulltin(self):
         try:
             self.logger.info("state changed to %s" % self.state)
@@ -106,6 +111,7 @@ class BalloonMissionComputer():
         except:
             pass
 
+    # ---------------------------------------------------------------------------
     def capture_image(self, archive=True):
         self.logger.debug("capture start")
         self.cam.capture()
@@ -113,6 +119,7 @@ class BalloonMissionComputer():
           self.cam.archive()
         self.logger.debug("capture end")
 
+    # ---------------------------------------------------------------------------
     def prep_image(self, id, gpsdata, sensordata):
         self.logger.debug("image manutulation start")
         self.cam.select(id)
@@ -121,6 +128,7 @@ class BalloonMissionComputer():
         self.cam.saveToFile(os.path.join(self.tmp_dir,"image.jpg"))
         self.logger.debug("image manipulation end")
 
+    # ---------------------------------------------------------------------------
     def process_ssdv(self):
         self.logger.debug("process ssdv start")
         self.logger.debug("jpg->ssdv")
@@ -132,6 +140,7 @@ class BalloonMissionComputer():
         self.timers.handle(None, ["PLAY-SSDV"])
         self.logger.debug("process ssdv end")
 
+    # ---------------------------------------------------------------------------
     def process_sstv(self):
         self.logger.debug("process sstv start")
         self.sstv.image = self.cam.image
@@ -140,6 +149,7 @@ class BalloonMissionComputer():
         self.timers.handle(None, ["PLAY-SSTV"])
         self.logger.debug("process sstv end")
 
+    # ---------------------------------------------------------------------------
     def gps_reset(self):
         self.logger.warning("reset gps")
         GPIO.setup(self.config['pins']['GPS_RST'], GPIO.OUT)
@@ -147,12 +157,14 @@ class BalloonMissionComputer():
         time.sleep(1)
         GPIO.output(self.config['pins']['GPS_RST'], GPIO.HIGH)
 
+    # ---------------------------------------------------------------------------
     def setup(self):
         self.logger.info("--------------------------------------")
         self.logger.info("   Balloon Mission Computer V4.01     ")
         self.logger.info("--------------------------------------")
         self.logger.debug("setup")
-        # setup
+
+        # setup files and directories
         with open('data/config.json') as fin:
             self.config = json.load(fin)
         self.images_dir = self.config["directories"]["images"] if "directories" in self.config and "images" in self.config["directories"] else "./images"
@@ -163,7 +175,7 @@ class BalloonMissionComputer():
         if not os.path.exists(self.images_dir):
             os.makedirs(self.images_dir)
 
-
+        # setup gpio
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)  # Broadcom pin-numbering scheme
         GPIO.setup(self.config['pins']['BUZZER'], GPIO.OUT)
@@ -171,6 +183,7 @@ class BalloonMissionComputer():
         GPIO.setup(self.config['pins']['LED2'], GPIO.OUT)
         GPIO.output(self.config['pins']['LED1'], GPIO.HIGH)
 
+        # modules
         self.aprs = APRS(self.config['callsign'], self.config['ssid'], "idoroseman.com")
         self.modem = AFSK()
         self.gps = Ublox()
@@ -188,10 +201,12 @@ class BalloonMissionComputer():
         self.webserver = WebServer()
         self.radio_queue(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
+        # timers
         for item in ["APRS", "APRS-META", "Imaging", 'Capture']:
            self.timers.handle({item: self.config['timers'][item] > 0 }, [])
         self.timers.handle({"Buzzer":False}, [])
 
+        # lets go
         self.ledState = 1
         self.imaging_counter = 1
         self.state = "init"
@@ -201,6 +216,7 @@ class BalloonMissionComputer():
         self.send_bulltin()
         GPIO.output(self.config['pins']['LED1'], GPIO.LOW)
 
+    # ---------------------------------------------------------------------------
     def run(self):
         self.logger.debug("run")
         telemetry = {}
@@ -209,9 +225,12 @@ class BalloonMissionComputer():
         self.prev_gps_status = ""
         while not exitFlag:
             try:
+                # blink
                 self.ledState = 1- self.ledState
                 GPIO.output(self.config['pins']['LED1'], GPIO.HIGH)
                 watchdog = Watchdog(60)
+
+                # gps
                 self.gps.loop()
                 gpsdata = self.gps.get_data()
                 self.calc_balloon_state(gpsdata)
@@ -219,6 +238,8 @@ class BalloonMissionComputer():
                     self.sensors.calibrate_alt(gpsdata['alt'])
                 if gpsdata['status'] != "fix":
                     gpsdata['alt'] = self.sensors.read_pressure()
+
+                # sensors
                 sensordata = self.sensors.get_data()
                 status_bits = self.calc_status_bits(gpsdata, sensordata)
                 telemetry['Satellites'] = gpsdata['SatCount'] * telemCoef['SatCount']
@@ -233,10 +254,14 @@ class BalloonMissionComputer():
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'aprs.wav'))
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'aprs.wav'))
                     self.prev_gps_status = gpsdata['status']
+
+                # UI
                 self.webserver.update(gpsdata, sensordata, self.state)
                 state, triggers = self.webserver.loop(self.timers.get_state())
+
+                # Timers
                 self.timers.handle(state, triggers)
-                self.update_datetime(gpsdata)
+                self.update_system_datetime(gpsdata)
 
                 if self.timers.expired("APRS"):
                     if gpsdata['status'] == "fix":
@@ -321,15 +346,19 @@ class BalloonMissionComputer():
                 self.logger.exception(x)
         self.logger.info("Done.")
 
+    # ---------------------------------------------------------------------------
     def radio_queue(self, freq, filename):
         self.radio_q.put({'freq':freq, 'filename':filename})
 
+    # ---------------------------------------------------------------------------
     def radio_worker(self):
         while True:
             item = self.radio_q.get()
             self.radio.play(item['freq'], item['filename'])
             self.radio_q.task_done()
 
+
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
     bmc = BalloonMissionComputer()
     bmc.setup()
