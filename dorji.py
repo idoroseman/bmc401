@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import time
@@ -9,6 +9,7 @@ import logging
 
 class Dorji():
     def __init__(self, pins):
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
@@ -28,7 +29,7 @@ class Dorji():
         os.system('gpio -g mode 18 alt5')  # sets GPIO 18 pin to ALT 5 mode = GPIO_GEN1
 
         self.ser = serial.Serial(
-            port='/dev/serial0',
+            port='/dev/ttyS0',
             baudrate=9600,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
@@ -44,13 +45,11 @@ class Dorji():
     def cmnd(self, data):
         while True:
             try:
-                if self.verbose:
-                    self.logger.debug(">%s"% data.strip())
+                self.logger.debug(">%s"% data.strip())
                 self.ser.write(data.encode())
                 time.sleep(1)
                 x = self.ser.readline().decode("UTF-8")
-                if self.verbose:
-                    self.logger.debug("<%s" % x.strip())
+                self.logger.debug("<%s" % x.strip())
                 if x.startswith('+') or x.startswith("S="):
                     self.isOK = True
                     break;
@@ -61,6 +60,7 @@ class Dorji():
     def init(self):
         self.logger.info("radio init")
         self.cmnd('AT+DMOCONNECT\r\n')
+        self.cmnd('AT+SETFILTER=0,0,0\r\n')
 
     def scan(self, freq):
         self.logger.info("radio scan %s" % freq)
