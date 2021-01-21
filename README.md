@@ -16,15 +16,15 @@ while previous version was a mix of c and bash scripts, this time it's written i
 - web based remote control for ground operation
 
 ## installation prerequisits on raspberry pi
-    sudo apt-get install git
-    sudo apt-get install python3-pip
-    sudo apt-get install python3-setuptools
-    sudo apt-get install python3-rpi.gpio
-    sudo apt-get install python3-smbus
-    sudo apt-get install wiringpi
-    sudo apt-get install python3-picamera
-    sudo apt-get install python3-pil
-    sudo apt-get install fswebcam
+    sudo apt install git -y
+    sudo apt install python3-pip -y
+    sudo apt install python3-setuptools -y
+    sudo apt install python3-rpi.gpio -y
+    sudo apt install python3-smbus -y
+    sudo apt install wiringpi -y
+    sudo apt install python3-picamera -y
+    sudo apt install python3-pil -y
+    sudo apt install fswebcam -y
     pip3 install pyserial
     
 ### installing adafruit bmp085 support
@@ -62,3 +62,10 @@ and change to
     sudo apt-get install libmagic-dev 
     gcc -lm -lgd -lmagic -o pisstv pisstv.c
 
+## both wifi client and access point
+https://www.raspberryconnect.com/projects/65-raspberrypi-hotspot-accesspoints/183-raspberry-pi-automatic-hotspot-and-static-hotspot-installer
+
+    SSID RPiHotspot 
+    password 1234567890
+    ssh pi@192.168.50.5
+    http://192.168.50.5/
