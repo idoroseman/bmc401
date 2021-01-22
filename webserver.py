@@ -52,7 +52,11 @@ def test_connect():
 
 @socketio.on('timer')
 def handle_timer(data):
-    timers.set_state(data['name'], data['value'])
+    if data['name'] == "*":
+        for name in timers.get_states():
+            timers.set_state(name, False)
+    else:
+        timers.set_state(data['name'], data['value'])
 
 @socketio.on('trigger')
 def handle_trigger(name):
@@ -71,6 +75,22 @@ def shutdown():
     shutdown_server()
     return 'Server shutting down...'
 
+@app.route('/cmnd')
+def handle_cmnd():
+    def clear_folder(folder):
+        try:
+            files = os.listdir(folder)
+            for f in files:
+                os.delete(folder + f)
+        except:
+            pass
+
+    cmnd = request.args.get('cmnd', '')
+    logging.info(cmnd)
+    if cmnd == "prefilght":
+        clear_folder('tmp/')
+        clear_folder('images/')
+    return "ok"
 
 @app.route('/')
 def index():
@@ -257,7 +277,7 @@ class WebServer():
         gpsdata = gpsd
         telemetry= telemd
         sysstate = sysstate
-        
+
         socketio.emit('gps', gpsdata)
         socketio.emit('sensors', telemetry)
 
@@ -288,5 +308,5 @@ if __name__ == "__main__":
     }
     while True:
         time.sleep(1)
-        webserver.update(gpsdata, sensord)
+        webserver.update(gpsdata, sensord, "test")
 

@@ -43,7 +43,7 @@ const StatusCard = (props) =>
     </Card.Text>
   </Card.Body>
   <Card.Footer>
-  <Button variant="outline-danger" size="sm">Clear Folders</Button>{' '}
+  <Button variant="outline-danger" size="sm" onClick={props.onPreFlight}>Clear Folders</Button>{' '}
   </Card.Footer>
   </Card>
 
@@ -70,14 +70,14 @@ const TimersCard = (props) => {
     </Card.Text>
   </Card.Body>
   <Card.Footer>
-    <Button variant="outline-primary" size="sm">Disable All</Button>{' '}
+    <Button variant="outline-primary" size="sm" onClick={props.onDisableAll}>Disable All</Button>{' '}
   </Card.Footer>
   </Card>
   </>
 }
 
 //------------------------------------------------------------------------------
-const ImagingCard = () => 
+const ImagingCard = (props) =>
   <Card>
   <Card.Img variant="top" src={header_right} />
   <Card.Body>
@@ -87,7 +87,7 @@ const ImagingCard = () =>
     </Card.Text>
   </Card.Body>
   <Card.Footer>
-    <Button variant="outline-primary" size="sm">recapture</Button>{' '}
+    <Button variant="outline-primary" size="sm" onClick={props.onSnapshot}>recapture</Button>{' '}
   </Card.Footer>
   </Card>
 
@@ -119,12 +119,18 @@ class Home extends React.Component {
           <StatusCard status={this.state.status}
                         gps={this.state.gps}
                         sensors={this.state.sensors}
+                        onPreFlight = {()=>{
+                            fetch('/cmnd?cmnd=prefilght')
+                              .then(response => response.text())
+                              .then(data => console.log(data));
+                          }}
                         />
           <TimersCard timers={this.state.timers}
                       onChange={(name, value)=>{ this.socket.emit("timer",{ name, value}); }}
                       onClick={(name)=>{ this.socket.emit("trigger", name);}}
+                      onDisableAll={()=>{ this.socket.emit("timer",{ name:'*', value:false}); }}
                       />
-          <ImagingCard/>
+          <ImagingCard onSnapshot={()=>{this.socket.emit("trigger", 'Snapshot');}} />
         </CardGroup>
     }
   }
