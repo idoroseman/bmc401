@@ -72,7 +72,7 @@ class BalloonMissionComputer():
         if self.state == "descent" and current_alt < 2000:
             self.state = "landed"
             self.send_bulltin()
-            self.timers.handle({'BUZZER':True}, [])
+            self.timers.set_state('BUZZER', True)
 
         if current_alt > self.max_alt:
             self.max_alt = current_alt
@@ -137,7 +137,7 @@ class BalloonMissionComputer():
         packets = self.ssdv.prepare(os.path.join(self.tmp_dir, "image.ssdv"))
         self.logger.debug("aprs->wav")
         self.ssdv.encode(packets, 'tmp/ssdv.wav')
-        self.timers.handle(None, ["PLAY-SSDV"])
+        self.timers.trigger("PLAY-SSDV")
         self.logger.debug("process ssdv end")
 
     # ---------------------------------------------------------------------------
@@ -146,7 +146,7 @@ class BalloonMissionComputer():
         self.sstv.image = self.cam.image
         self.sstv.process()
         self.sstv.saveToFile(os.path.join(self.tmp_dir, 'sstv.wav'))
-        self.timers.handle(None, ["PLAY-SSTV"])
+        self.timers.trigger("PLAY-SSTV")
         self.logger.debug("process sstv end")
 
     # ---------------------------------------------------------------------------
@@ -203,8 +203,8 @@ class BalloonMissionComputer():
 
         # timers
         for item in ["APRS", "APRS-META", "Imaging", 'Capture']:
-           self.timers.handle({item: self.config['timers'][item] > 0 }, [])
-        self.timers.handle({"Buzzer":False}, [])
+           self.timers.set_state(item, self.config['timers'][item] > 0 )
+        self.timers.set_state("Buzzer", False)
 
         # lets go
         self.ledState = 1
@@ -257,10 +257,6 @@ class BalloonMissionComputer():
 
                 # UI
                 self.webserver.update(gpsdata, sensordata, self.state)
-                state, triggers = self.webserver.loop(self.timers.get_state())
-
-                # Timers
-                self.timers.handle(state, triggers)
                 self.update_system_datetime(gpsdata)
 
                 if self.timers.expired("APRS"):

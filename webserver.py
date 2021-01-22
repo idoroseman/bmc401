@@ -11,6 +11,8 @@ import requests
 import time
 import logging
 
+from timers import Timers
+
 PORT_NUMBER = 8080
 
 app = Flask(__name__, static_url_path='/static', static_folder='webapp/build/static/')
@@ -21,8 +23,17 @@ CORS(app)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+
 parser = reqparse.RequestParser()
 
+def handle_state_change():
+    socketio.emit("timers", timers.get_states())
+
+#timers = Timers()
+timers = Timers({"One": 0.1, "Four": 0.25, "Five": 0.5})
+timers.subscribe(handle_state_change)
+timers.set_state("One", True)
+timers.set_state("Five", True)
 
 class Log(Resource):
     def get(self):
@@ -31,10 +42,21 @@ class Log(Resource):
 api.add_resource(Log, '/logs')
 
 
+
 @socketio.on('connect')
 def test_connect():
-    emit('ido', {'data': 'Connected'})
+    emit("timers", timers.get_states())
+    emit("status", {})
+    emit('gps', gpsdata)
+    emit('sensors', telemetry)
 
+@socketio.on('timer')
+def handle_timer(data):
+    timers.set_state(data['name'], data['value'])
+
+@socketio.on('trigger')
+def handle_trigger(name):
+    timers.trigger(name)
 
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
@@ -59,8 +81,11 @@ def index():
 
 @app.route('/imaging')
 @app.route('/imaging/<sensor>')
-def show(sensor='1'):
-    return send_from_directory('data', 'testcard.jpg')
+def show(sensor='image.jpg'):
+    try:
+        return send_from_directory('tmp',sensor)
+    except:
+        return send_from_directory('data', 'testcard.jpg')
 
 gpsdata = {'status': 'fix',
            'latDir': 'N',
@@ -87,7 +112,7 @@ telemetry = {'Satellites':4,
 
 state = {}
 triggers = []
-sysstate = ""
+sysstate = "loading"
 start_time = datetime.datetime.now()
 
 # This class will handles any incoming request from
@@ -225,21 +250,43 @@ class WebServer():
         self.server = threading.Thread(target=socketio.run, args=[app], kwargs={'host': '0.0.0.0', 'port':PORT_NUMBER})
         self.server.start()
 
-    def update(self, gpsd, telemd):
+    def update(self, gpsd, telemd, state):
         global gpsdata
         global telemetry
         global sysstate
         gpsdata = gpsd
         telemetry= telemd
+        sysstate = sysstate
+        
+        socketio.emit('gps', gpsdata)
+        socketio.emit('sensors', telemetry)
+
+        now = datetime.datetime.now()
+        status = {
+            'date': datetime.datetime.strftime(now, "%Y-%m-%d"),
+            'time': datetime.datetime.strftime(now, "%H:%M:%S"),
+            'uptime':str(now-start_time).split('.')[0],
+            'appstate': sysstate
+        }
+        socketio.emit('status', status)
 
     def close(self):
         r = requests.post('http://localhost:5000/shutdown')
         self.server.join()
 
     def report(self, data):
-        socketio.emit('eyetracker', data)
+        socketio.emit('debug', data)
 
 if __name__ == "__main__":
     webserver = WebServer()
+
+    sensord= {
+        'tempout': 17.2,
+        'tempin': -2,
+        'barometer': 1000,
+        'battery': 3.4
+    }
     while True:
         time.sleep(1)
+        webserver.update(gpsdata, sensord)
+

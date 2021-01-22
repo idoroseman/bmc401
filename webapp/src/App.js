@@ -7,6 +7,7 @@ import Card from 'react-bootstrap/Card'
 import CardGroup from 'react-bootstrap/CardGroup'
 import { LinkContainer } from 'react-router-bootstrap';
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
+import io from "socket.io-client"; // need version 2.1.1 to work with flask
 
 import './App.css';
 
@@ -22,21 +23,21 @@ const StatusCard = (props) =>
     <Card.Title>Status</Card.Title>
     <Card.Text>
     <table border="0">
+
     <tr><td>Date</td><td>{props.status.date}</td></tr>
     <tr><td>Time</td><td>{props.status.time}</td></tr>
     <tr><td>state</td><td>{props.status.appstate}</td></tr>
     <tr><td>uptime</td><td>{props.status.uptime}</td></tr>
     <tr><td>&nbsp;</td></tr>
-    <tr><td>Lat</td><td>{props.status.gps.lat}</td></tr>
-    <tr><td>Lon</td><td>{props.status.gps.lon}</td></tr>
-    <tr><td>Alt</td><td>{props.status.gps.alt}</td></tr>
-    <tr><td>Status</td><td>{props.status.gps.status}</td></tr>
-    <tr><td>Sats</td><td>{props.status.gps.sats}</td></tr>
+
+    <tr><td>Lat</td><td>{props.gps.lat}</td></tr>
+    <tr><td>Lon</td><td>{props.gps.lon}</td></tr>
+    <tr><td>Alt</td><td>{props.gps.alt}</td></tr>
+    <tr><td>Status</td><td>{props.gps.status}</td></tr>
+    <tr><td>Sats</td><td>{props.gps.SatCount}</td></tr>
     <tr><rd>&nbsp;</rd></tr>
-    <tr><td>Temp out</td><td>{props.status.sensors.tempout}</td></tr>
-    <tr><td>Temp in</td><td>{props.status.sensors.tempin}</td></tr>
-    <tr><td>Barometer</td><td>{props.status.sensors.barometer}</td></tr>
-    <tr><td>Battery</td><td>{props.status.sensors.battery}</td></tr>
+
+    { Object.entries(props.sensors).map( ([key, value]) => <tr><td>{key}</td><td>{value}</td></tr> )}
     <tr></tr>
     </table>
     </Card.Text>
@@ -51,7 +52,10 @@ const StatusCard = (props) =>
 const TimersCard = (props) => {
   var timer_rows =  Object.keys(props.timers).map((name)=>{ return <tr>
     <td>{name}</td>
-    <td><BootstrapSwitchButton checked={props.timers[name]} width={75} onChange={(val)=>{props.onChange(name, val)}}/>{' '}
+    <td><BootstrapSwitchButton  checked={props.timers[name]}
+                                width={75}
+                                onChange={(val)=>{props.onChange(name, val)}}
+                                />{' '}
     <Button variant="outline-primary" onClick={()=>{props.onClick(name)}}>Trigger</Button></td>
   </tr>})
   return <>
@@ -88,40 +92,41 @@ const ImagingCard = () =>
   </Card>
 
 //------------------------------------------------------------------------------
-const Home = () => {
-    const timers = {
-                  'BUZZER':true, 
-                  'PLAY-SSDV':false, 
-                  'PLAY-SSTV': false, 
-                  'APRS': true, 
-                  'APRS-META': true, 
-                  'Capture': false, 
-                  'Snapshot':false, 
-                  'Imaging':true
-                }
-    const status = {
-      date : "2021-01-06",
-      time : "12:34",
-      gps : {
-        lat: "32.23",
-        lon: "34.56",
-        alt: 123
-      },
-      sensors : {
-        tempout : 17.2,
-        tempin : -2,
-        barometer : 1000,
-        battery : 3.4
-      }
+class Home extends React.Component {
+
+    constructor(props) {
+        super(props)
+        this.state = { timers: {} ,
+                        sensors: {},
+                        gps:{},
+                        status:{ }
+                        }
     }
-    return <CardGroup>
-      <StatusCard status={status}/>
-      <TimersCard timers={timers} 
-                  onChange={(name, value)=>{console.log(name, value);}}
-                  onClick={(name)=>{console.log("trigger", name);}}
-                  />
-      <ImagingCard/>
-    </CardGroup>
+
+    componentDidMount(){
+        this.socket = io.connect("/");
+        this.socket.on('connect', ()=>{console.log("connected")});
+        this.socket.on('status', (data)=>{ this.setState({'status':data}) });
+        this.socket.on('timers', (data)=>{ this.setState({'timers':data}) });
+        this.socket.on('gps', (data)=>{ this.setState({'gps':data}) });
+        this.socket.on('sensors', (data)=>{ this.setState({'sensors':data}) });
+        this.socket.on('debug', (data)=>{ console.log(data) });
+        this.socket.on('disconnect', ()=>{console.log("disconnected")});
+    }
+
+    render(){
+        return <CardGroup>
+          <StatusCard status={this.state.status}
+                        gps={this.state.gps}
+                        sensors={this.state.sensors}
+                        />
+          <TimersCard timers={this.state.timers}
+                      onChange={(name, value)=>{ this.socket.emit("timer",{ name, value}); }}
+                      onClick={(name)=>{ this.socket.emit("trigger", name);}}
+                      />
+          <ImagingCard/>
+        </CardGroup>
+    }
   }
 
 //------------------------------------------------------------------------------
@@ -145,20 +150,7 @@ const App = () => (
           <Home />
         </Route>
       </Switch>
-{/*
-          Navigate to{' '}
-          <ButtonToolbar className="custom-btn-toolbar">
-            <LinkContainer to="/">
-              <Button>Home</Button>
-            </LinkContainer>
-            <LinkContainer to="/about">
-              <Button>About</Button>
-            </LinkContainer>
-            <LinkContainer to="/users">
-              <Button>Users</Button>
-            </LinkContainer>
-          </ButtonToolbar>
-*/}
+
     </Container>
   </MemoryRouter>
 );

@@ -18,10 +18,15 @@ class Timers(Borg):
             self.state = {}
             self.triggers = []
         self.timeouts.update(items)
+        for item in items:
+            self.state[item] = False
 
         if not hasattr(self, "logger"):
             self.logger = logging.getLogger(__name__)
             self.logger.setLevel(logging.DEBUG)
+
+        if not hasattr(self, "_listeners"):
+            self._listeners = []
 
     def expired(self, id):
         now = time.time()
@@ -46,14 +51,19 @@ class Timers(Borg):
 
     def set_state(self, name, enabled):
         self.state[name] = enabled
+        for func in self._listeners:
+            func()
 
     def trigger(self, name):
         if name not in self.triggers:
             self.triggers.append(name)
 
-#     def get_state(self):
-#         return self.state
-#
+    def get_states(self):
+        return self.state
+
+    def subscribe(self, func):
+        self._listeners.append(func)
+
 #     def handle(self, state, triggers):
 #         if state is not None:
 #             for item in state:
