@@ -33,6 +33,8 @@ CAMERAS = 2
 class BalloonMissionComputer():
     # ---------------------------------------------------------------------------
     def __init__(self):
+        if not os.path.exists('tmp/'):
+            os.makedirs('tmp/')
         logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s: %(message)s', 
                             level=logging.DEBUG,
                             datefmt='%Y-%m-%d %H:%M:%S')
@@ -186,8 +188,11 @@ class BalloonMissionComputer():
         # modules
         self.aprs = APRS(self.config['callsign'], self.config['ssid'], "idoroseman.com")
         self.modem = AFSK()
-        self.gps = Ublox()
-        self.gps.start()
+        try:
+            self.gps = Ublox()
+            self.gps.start()
+        except:
+            pass
         self.radio = Dorji(self.config['pins'])
         self.radio.init()
         self.radio_q = queue.Queue()

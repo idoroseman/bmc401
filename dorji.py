@@ -28,15 +28,18 @@ class Dorji():
 
         os.system('gpio -g mode 18 alt5')  # sets GPIO 18 pin to ALT 5 mode = GPIO_GEN1
 
-        self.ser = serial.Serial(
-            port='/dev/ttyS0',
-            baudrate=9600,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS,
-            timeout=1,
-            write_timeout=1
-        )
+        try:
+            self.ser = serial.Serial(
+                port='/dev/ttyS0',
+                baudrate=9600,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                bytesize=serial.EIGHTBITS,
+                timeout=1,
+                write_timeout=1
+            )
+        except:
+            pass
 
         self.isOK = False
         self.verbose = True

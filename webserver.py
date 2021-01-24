@@ -29,11 +29,11 @@ parser = reqparse.RequestParser()
 def handle_state_change():
     socketio.emit("timers", timers.get_states())
 
-#timers = Timers()
-timers = Timers({"One": 0.1, "Four": 0.25, "Five": 0.5})
-timers.subscribe(handle_state_change)
-timers.set_state("One", True)
-timers.set_state("Five", True)
+timers = Timers()
+#timers = Timers({"One": 0.1, "Four": 0.25, "Five": 0.5})
+#timers.subscribe(handle_state_change)
+#timers.set_state("One", True)
+#timers.set_state("Five", True)
 
 class Log(Resource):
     def get(self):
