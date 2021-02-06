@@ -26,6 +26,9 @@ while previous version was a mix of c and bash scripts, this time it's written i
     sudo apt install python3-pil -y
     sudo apt install fswebcam -y
     pip3 install pyserial
+    pip3 install flask flask-cors flask-socketio flask-restful
+
+
     
 ### installing adafruit bmp085 support
     git clone https://github.com/adafruit/Adafruit_Python_BMP.git
