@@ -96,33 +96,36 @@ class Camera():
         self.image = self.image.crop((left, 0, right, h1))
 
     def overlay(self, callsign, gps, sensors):
-        yellow = (255, 255, 0, 255)
-        brown = (165,42,42)
+        title_text = (191, 255, 0, 255)
+        title_background = (34, 139, 34)
+        telem_text = (191, 255, 0, 255)
+        cam_arrow = (255, 255, 0)
+        
         green = (0, 255, 0)
         layer = Image.new('RGBA', self.image.size, (255, 255, 255, 0))
         draw = ImageDraw.Draw(layer)
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 15)
         # url & date time
-        draw.text((170+1, 5+1), "idoroseman.com", font=font, fill=brown)
-        draw.text((170, 5), "idoroseman.com", font=font, fill=yellow)
-        draw.text((170+1, 20+1), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), brown, font)
-        draw.text((170, 20), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), yellow, font)
+        draw.text((170+1, 5+1), "idoroseman.com", font=font, fill=title_background)
+        draw.text((170, 5), "idoroseman.com", font=font, fill=title_text)
+        draw.text((170+1, 20+1), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), title_background, font)
+        draw.text((170, 20), "%s" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), title_text, font)
         # telemetry
         draw.rectangle(((5, 185), (155, 240)), (255, 255, 255, 90))
         if gps['status'] == "fix":
-            draw.text((10, 190), "%2.4f  %2.4f" % (gps['lat'], gps['lon']), yellow, font)
+            draw.text((10, 190), "%2.4f  %2.4f" % (gps['lat'], gps['lon']), telem_text, font)
         else:
-            draw.text((10, 190), "GPS %s" % gps['status'], yellow, font)
-        draw.text((10, 205), "%dm" % float(gps['alt']), yellow, font)
-        draw.text((80, 205), ("%4.1fmb" % sensors['barometer']).rjust(8), yellow, font)
-        draw.text((10, 220), "%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], yellow, font)
-        draw.text((60, 220), "%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], yellow, font)
-        draw.text((114, 220), "%1.1fV" % sensors['battery'], yellow, font)
+            draw.text((10, 190), "GPS %s" % gps['status'], telem_text, font)
+        draw.text((10, 205), "%dm" % float(gps['alt']), telem_text, font)
+        draw.text((80, 205), ("%4.1fmb" % sensors['barometer']).rjust(8), telem_text, font)
+        draw.text((10, 220), "%+2.0f\N{DEGREE SIGN}C" % sensors['outside_temp'], telem_text, font)
+        draw.text((60, 220), "%+2.0f\N{DEGREE SIGN}C" % sensors['inside_temp'], telem_text, font)
+        draw.text((114, 220), "%1.1fV" % sensors['battery'], telem_text, font)
         # logo
         self.image.paste(self.logo, (220, 130), self.mask)
         if self.cam_id == 0:
-            draw.text((304, 5), "V", green, font)
-        elif self.cam_id == 1:
+            draw.text((304, 5), "V", cam_arrow, font)
+        elif self.cam_id == 1cam_arrow
             draw.text((304, 5), ">", green, font)
 
         del draw
