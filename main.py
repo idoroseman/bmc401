@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import os
 import sys
 import json
@@ -301,6 +303,7 @@ class BalloonMissionComputer():
                     cam_select = self.imaging_counter % CAMERAS
                     self.capture_image(archive=False)
                     self.prep_image(cam_select, gpsdata, sensordata)
+                    self.webserver.snapshot()
 
                 if self.timers.expired("Imaging"):
                     self.imaging_counter += 1
@@ -309,6 +312,7 @@ class BalloonMissionComputer():
                     self.logger.info("imageing")
                     self.capture_image(archive=False)
                     self.prep_image(cam_select, gpsdata, sensordata)
+                    self.webserver.snapshot()
                     if cam_system == 0:
                         self.logger.info("->sstv")
                         _thread.start_new_thread(self.process_sstv, () )

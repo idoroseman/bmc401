@@ -83,7 +83,7 @@ const ImagingCard = (props) =>
   <Card.Body>
     <Card.Title>Images</Card.Title>
     <Card.Text>
-      <img src='/imaging' width="320px"/>
+      <img src={'/imaging?hash=' + props.image_hash} width="320px"/>
     </Card.Text>
   </Card.Body>
   <Card.Footer>
@@ -110,6 +110,7 @@ class Home extends React.Component {
         this.socket.on('timers', (data)=>{ this.setState({'timers':data}) });
         this.socket.on('gps', (data)=>{ this.setState({'gps':data}) });
         this.socket.on('sensors', (data)=>{ this.setState({'sensors':data}) });
+        this.socket.on('snapshot', (data)=>{ console.log("snapshot"); this.setState({'image_hash':Date.now() }) });
         this.socket.on('debug', (data)=>{ console.log(data) });
         this.socket.on('disconnect', ()=>{console.log("disconnected")});
     }
@@ -130,7 +131,9 @@ class Home extends React.Component {
                       onClick={(name)=>{ this.socket.emit("trigger", name);}}
                       onDisableAll={()=>{ this.socket.emit("timer",{ name:'*', value:false}); }}
                       />
-          <ImagingCard onSnapshot={()=>{this.socket.emit("trigger", 'Snapshot');}} />
+          <ImagingCard hash={this.state.image_hash}
+                       onSnapshot={()=>{this.socket.emit("trigger", 'Snapshot');}}
+                      />
         </CardGroup>
     }
   }

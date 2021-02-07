@@ -97,8 +97,10 @@ def index():
 @app.route('/imaging/<sensor>')
 def show(sensor='image.jpg'):
     try:
+        print("tmp",sensor)
         return send_from_directory('tmp',sensor)
-    except:
+    except Exception as x:
+        print(x)
         return send_from_directory('data', 'testcard.jpg')
 
 gpsdata = {'status': 'fix',
@@ -290,6 +292,9 @@ class WebServer():
 
     def report(self, data):
         socketio.emit('debug', data)
+
+    def snapshot(self):
+        socketio.emit("snapshot", None)
 
 if __name__ == "__main__":
     webserver = WebServer()
