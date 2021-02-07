@@ -125,8 +125,8 @@ class Camera():
         self.image.paste(self.logo, (220, 130), self.mask)
         if self.cam_id == 0:
             draw.text((304, 5), "V", cam_arrow, font)
-        elif self.cam_id == 1cam_arrow
-            draw.text((304, 5), ">", green, font)
+        elif self.cam_id == 1:
+            draw.text((304, 5), ">", cam_arrow, font)
 
         del draw
         self.image = Image.alpha_composite(self.image, layer)
