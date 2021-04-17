@@ -19,12 +19,12 @@ class Dorji():
 
         GPIO.setup(self.pin['PD'], GPIO.OUT)
         GPIO.setup(self.pin['PTT'], GPIO.OUT)
-        GPIO.setup(self.pin['HILO'], GPIO.OUT)
+        GPIO.setup(self.pin['HILO'], GPIO.IN)
         GPIO.setup(self.pin['LED2'], GPIO.OUT)
 
         GPIO.output(self.pin['PTT'], GPIO.HIGH)  # LOW = TX, HIGH = RX
         GPIO.output(self.pin['PD'], GPIO.HIGH)  # LOW = Sleep, HIGH = Normal
-        GPIO.output(self.pin['HILO'], GPIO.LOW)  # LOW = 0.5W, Float = 1W
+#       power pin :  LOW = 0.5W, Float = 1W, HIGH causes insain power consumption !
 
         os.system('gpio -g mode 18 alt5')  # sets GPIO 18 pin to ALT 5 mode = GPIO_GEN1
 
