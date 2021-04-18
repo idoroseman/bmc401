@@ -50,6 +50,7 @@ syntax: regexp
 tmp/*
 images/*
 utils/*
+ssdv/*
 log/*
 .idea/*
 venv/

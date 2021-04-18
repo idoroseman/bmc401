@@ -36,6 +36,7 @@ class Camera():
         #else:
         #    newData.append(item)
         #self.logo.putdata(newData)
+        self.status = { "cam1":"ok", "cam2":"ok" }
 
     def capture(self):
         try:
@@ -46,6 +47,7 @@ class Camera():
             self.image1 = Image.open(self.stream).convert("RGBA")
             if self.isFisheye:
                 self.image1 = self.zoom(self.image1, self.border)
+            self.status['cam1'] = "ok"
         except Exception as x:
             self.logger.exception(x)
             self.image1 = Image.new("RGBA", (320,256))
@@ -53,15 +55,18 @@ class Camera():
             draw = ImageDraw.Draw(self.image1)
             font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 15)
             draw.text((10,100), "ERROR", red, font);
-            draw.text((10,120), x, red, font);
+            draw.text((10,120), str(x), red, font);
+            self.status['cam1'] = "err"
 
         try:
             if not USE_WEBCAM:
                 raise Exception("no webcam")
             os.system("fswebcam -r 1024X768 -d /dev/video1 -p YUYV -S 120 --no-banner tmp/usbcam.jpg")
             self.image2 = Image.open("tmp/usbcam.jpg").convert("RGBA")
+            self.status['cam2'] = "ok"
         except:
             self.image2 = Image.new("RGBA", (320,256))
+            self.status['cam2'] = "err"
 
     def archive(self):
         filename = datetime.datetime.now().strftime("%Y-%m-%d-%H%M")
@@ -100,7 +105,7 @@ class Camera():
         title_background = (34, 139, 34)
         telem_text = (191, 255, 0, 255)
         cam_arrow = (255, 255, 0)
-        
+
         green = (0, 255, 0)
         layer = Image.new('RGBA', self.image.size, (255, 255, 255, 0))
         draw = ImageDraw.Draw(layer)

@@ -51,15 +51,15 @@ class BalloonMissionComputer():
     def calc_status_bits(self, gpsdata, sensordata):
         bits = [True,
                 False,
-                False,
-                False,
+                self.cam.status['cam2'] == "ok",
+                self.cam.status['cam1'] == "ok",
                 gpsdata['status'] == "fix",
                 gpsdata['status'] == "lost",
                 gpsdata['status'] == "comm error",
                 gpsdata['status'] == "i2c error"]
         return ''.join(['1' if val else '0' for val in bits])
 
-    status_names = ['gps i2c err', "gps comm err", "gps no fix", "gps ok"]
+    status_names = ['gps i2c err', "gps comm err", "gps no fix", "gps ok", "cam1 ok", "cam2 ok"]
 
     # ---------------------------------------------------------------------------
     def calc_balloon_state(self, gpsdata):

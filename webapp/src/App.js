@@ -84,6 +84,8 @@ const ImagingCard = (props) =>
     <Card.Title>Images</Card.Title>
     <Card.Text>
       <img src={'/imaging?hash=' + props.image_hash} width="320px"/>
+      <br/>
+      {props.image_hash}
     </Card.Text>
   </Card.Body>
   <Card.Footer>
@@ -131,7 +133,7 @@ class Home extends React.Component {
                       onClick={(name)=>{ this.socket.emit("trigger", name);}}
                       onDisableAll={()=>{ this.socket.emit("timer",{ name:'*', value:false}); }}
                       />
-          <ImagingCard hash={this.state.image_hash}
+          <ImagingCard image_hash={this.state.image_hash}
                        onSnapshot={()=>{this.socket.emit("trigger", 'Snapshot');}}
                       />
         </CardGroup>
