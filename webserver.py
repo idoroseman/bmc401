@@ -31,11 +31,35 @@ def handle_state_change():
 timers = Timers()
 timers.subscribe(handle_state_change)
 
+#-----------------------------------------------------
+
+logs = []
+
+class MyLogHandler(logging.StreamHandler):
+    def emit(self, record):
+        global logs
+        if record.name == "werkzeug":
+            return
+        msg = self.format(record)
+        print(record)
+        logs = logs[-15:]
+        logs.append(msg.strip())
+        socketio.emit("log", msg.strip())
+
 class Log(Resource):
     def get(self):
         return logs
 
 api.add_resource(Log, '/logs')
+
+syslog = logging.getLogger()
+kh = MyLogHandler()
+kh.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(levelname)s: %(name)s - %(message)s')
+kh.setFormatter(formatter)
+syslog.addHandler(kh)
+
+#-----------------------------------------------------
 
 @socketio.on('connect')
 def test_connect():
@@ -56,18 +80,21 @@ def handle_timer(data):
 def handle_trigger(name):
     timers.trigger(name)
 
+#-----------------------------------------------------
+
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
     func()
 
-
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
     print("flask shutdown")
     shutdown_server()
     return 'Server shutting down...'
+
+#-----------------------------------------------------
 
 @app.route('/cmnd')
 def handle_cmnd():
@@ -92,6 +119,8 @@ def index():
        return send_file('webapp/build/index.html')
     except Exception as x:
         logging.error("GET / : %s" % x)
+
+#-----------------------------------------------------
 
 @app.route('/imaging')
 @app.route('/imaging/<sensor>')

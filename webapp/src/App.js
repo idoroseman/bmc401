@@ -115,6 +115,7 @@ class Home extends React.Component {
         this.socket.on('snapshot', (data)=>{ console.log("snapshot"); this.setState({'image_hash':Date.now() }) });
         this.socket.on('debug', (data)=>{ console.log(data) });
         this.socket.on('disconnect', ()=>{console.log("disconnected")});
+        this.socket.on('log', (data)=>{console.log(data);});
     }
 
     render(){

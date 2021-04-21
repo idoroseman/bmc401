@@ -59,6 +59,7 @@ class Dorji():
                 self.logger.debug("retry cmnd send")
             except Exception as x:
                 self.logger.exception(x)
+                break
 
     def init(self):
         self.logger.info("radio init")

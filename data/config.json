@@ -14,10 +14,10 @@
     "GPS_RST":23
   },
   "timers":{
-   "APRS": 1,
+   "APRS": 3,
    "APRS-META":50,
-   "Capture": 0,
-   "Imaging": 0,
+   "Capture": 1,
+   "Imaging": 10,
    "BIT":  5,
    "Buzzer": 1
   },
