@@ -169,6 +169,7 @@ class SSDV():
         return rv
 
     def encode(self,packets, filename):
+      try:
         tmpfilename = "tmp/ssdv_packets.txt"
         with open(tmpfilename, 'w') as f:
             f.write('\n'.join([str(p) for p in packets]))
@@ -177,6 +178,8 @@ class SSDV():
         out = subprocess.check_output(cmd, shell=True)
         end_time = time.time()
         self.logger.info("rust encoding %s messages took %s seconds" % (len(packets), end_time-start_time))
+      except Exception as x:
+        self.logger.exception(x)
 
 if __name__ == "__main__":
     from modem import AFSK

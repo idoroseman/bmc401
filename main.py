@@ -321,7 +321,6 @@ class BalloonMissionComputer():
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'coef.wav'))
 
                 if self.timers.expired("Capture"):
-                    print("Cature")
                     self.capture_image()
 
                 if self.timers.expired("Snapshot"):

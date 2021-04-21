@@ -54,16 +54,25 @@ and change to
     cd utils
 
 * SSDV *
+
     git clone https://github.com/fsphil/ssdv
     cd ssdv
     make
 
 * PiSSTV *
+
     git clone https://github.com/AgriVision/pisstv
     cd pisstv
     sudo apt-get install libgd-dev 
     sudo apt-get install libmagic-dev 
     gcc -lm -lgd -lmagic -o pisstv pisstv.c
+
+* aprs-tools
+
+    mkdir aprs-tool
+    cd aprs-tool
+    wget https://github.com/idoroseman/aprs-tool/releases/download/0.1/aprs-encode
+    chmod +x aprs-encode     
 
 ## both wifi client and access point
 https://www.raspberryconnect.com/projects/65-raspberrypi-hotspot-accesspoints/183-raspberry-pi-automatic-hotspot-and-static-hotspot-installer
