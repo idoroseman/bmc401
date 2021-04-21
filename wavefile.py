@@ -68,8 +68,8 @@ class WaveFile():
         byterate = self.g_rate * CHANS * BITS / 8  # audio bytes / sec
         blockalign = CHANS * BITS / 8  # total bytes / sample
 
-        self.logger.info("Writing audio data to file %s"%filename)
-        self.logger.info("Got a total of [%d] samples." % self.g_samples)
+        self.logger.debug("Writing audio data to file %s"%filename)
+        self.logger.debug("Got a total of [%d] samples." % self.g_samples)
 
         # RIFF header
         rv = []
@@ -103,4 +103,4 @@ class WaveFile():
             fout.write(bytes(rv))
 
         # no trailer
-        self.logger.info("Done writing to audio file.")
+        self.logger.debug("Done writing to audio file.")

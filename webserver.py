@@ -33,30 +33,12 @@ timers.subscribe(handle_state_change)
 
 #-----------------------------------------------------
 
-logs = []
-
-class MyLogHandler(logging.StreamHandler):
-    def emit(self, record):
-        global logs
-        if record.name == "werkzeug":
-            return
-        msg = self.format(record)
-        logs = logs[-15:]
-        logs.append(msg.strip())
-        socketio.emit("log", msg.strip())
 
 class Log(Resource):
     def get(self):
         return logs
 
 api.add_resource(Log, '/logs')
-
-syslog = logging.getLogger()
-kh = MyLogHandler()
-kh.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(levelname)s: %(name)s - %(message)s')
-kh.setFormatter(formatter)
-syslog.addHandler(kh)
 
 #-----------------------------------------------------
 
@@ -323,6 +305,9 @@ class WebServer():
 
     def snapshot(self):
         socketio.emit("snapshot", None)
+
+    def log(self, msg):
+        socketio.emit("log", msg.strip())
 
 if __name__ == "__main__":
     webserver = WebServer()

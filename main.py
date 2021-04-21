@@ -32,6 +32,17 @@ import queue
 
 CAMERAS = 2
 
+class MyLogHandler(logging.StreamHandler):
+    _listeners = []
+
+    def emit(self, record):
+        if record.name == "werkzeug":
+            return
+        msg = self.format(record)
+        for func in self._listeners:
+            func(msg.strip())
+
+
 class BalloonMissionComputer():
     # ---------------------------------------------------------------------------
     def __init__(self):
@@ -45,7 +56,12 @@ class BalloonMissionComputer():
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S')
         hdlr.setFormatter(formatter)
-        self.logger.addHandler(hdlr) 
+        self.logger.addHandler(hdlr)
+
+
+    #---------------------------------------------------------------------------
+    def handle_log(self, msg):
+        self.webserver.log(msg)
 
     #---------------------------------------------------------------------------
     def calc_status_bits(self, gpsdata, sensordata):
@@ -208,6 +224,14 @@ class BalloonMissionComputer():
         self.webserver = WebServer()
         self.radio_queue(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
 
+        self.syslog = logging.getLogger()
+        kh = MyLogHandler()
+        kh._listeners.append(self.handle_log)
+        kh.setLevel(logging.DEBUG)
+        formatter2 = logging.Formatter('%(levelname)s: %(name)s - %(message)s')
+        kh.setFormatter(formatter2)
+        self.syslog.addHandler(kh)
+
         # timers
         for item in ["APRS", "APRS-META", "Imaging", 'Capture']:
            self.timers.set_state(item, self.config['timers'][item] > 0 )
@@ -297,6 +321,7 @@ class BalloonMissionComputer():
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'coef.wav'))
 
                 if self.timers.expired("Capture"):
+                    print("Cature")
                     self.capture_image()
 
                 if self.timers.expired("Snapshot"):

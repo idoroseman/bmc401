@@ -45,6 +45,7 @@ class Timers(Borg):
             if id in self.triggers:
                 self.triggers.remove(id)
             self.timestamps[id] = now
+            self.logger.info("%s triggered" % id)
             return True
         else:
             return False

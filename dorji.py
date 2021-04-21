@@ -62,37 +62,37 @@ class Dorji():
                 break
 
     def init(self):
-        self.logger.info("radio init")
+        self.logger.debug("radio init")
         self.cmnd('AT+DMOCONNECT\r\n')
         self.cmnd('AT+SETFILTER=0,0,0\r\n')
 
     def scan(self, freq):
-        self.logger.info("radio scan %s" % freq)
+        self.logger.debug("radio scan %s" % freq)
         self.cmnd("S+%.4f\r\n" % freq)
 
     def freq(self, freq):
-        self.logger.info("radio freq %s" % freq)
+        self.logger.debug("radio freq %s" % freq)
         self.cmnd("AT+DMOSETGROUP=0,%.4f,%.4f,0000,4,0000\r\n" % (freq, freq))
 
     def tx(self):
-        self.logger.info("radio tx")
+        self.logger.debug("radio tx")
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.LOW)
         GPIO.output(self.pin['LED2'], GPIO.HIGH)
 
     def rx(self):
-        self.logger.info("radio rx")
+        self.logger.debug("radio rx")
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
         GPIO.output(self.pin['LED2'], GPIO.LOW)
 
     def standby(self):
-        self.logger.info("radio standby")
+        self.logger.debug("radio standby")
         GPIO.output(self.pin['PD'], GPIO.LOW)
         GPIO.output(self.pin['PTT'], GPIO.HIGH)
 
     def power(self, level):
-        self.logger.info("radio power %s" % level)
+        self.logger.debug("radio power %s" % level)
         GPIO.setup(self.pin['HILO'], GPIO.OUT)
         if level == "high":
             GPIO.output(self.pin['HILO'], GPIO.HIGH)
