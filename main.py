@@ -51,8 +51,8 @@ class BalloonMissionComputer():
     def calc_status_bits(self, gpsdata, sensordata):
         bits = [True,
                 False,
-                self.cam.status['cam2'] == "ok",
-                self.cam.status['cam1'] == "ok",
+                sensordata['cam2'] == "ok",
+                sensordata['cam1'] == "ok",
                 gpsdata['status'] == "fix",
                 gpsdata['status'] == "lost",
                 gpsdata['status'] == "comm error",
@@ -248,6 +248,7 @@ class BalloonMissionComputer():
 
                 # sensors
                 sensordata = self.sensors.get_data()
+                sensordata.update(self.cam.status)
                 status_bits = self.calc_status_bits(gpsdata, sensordata)
                 telemetry['Satellites'] = gpsdata['SatCount'] * telemCoef['SatCount']
                 telemetry['outside_temp'] = sensordata['outside_temp'] * telemCoef['outside_temp']

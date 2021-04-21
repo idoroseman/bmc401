@@ -41,7 +41,6 @@ class MyLogHandler(logging.StreamHandler):
         if record.name == "werkzeug":
             return
         msg = self.format(record)
-        print(record)
         logs = logs[-15:]
         logs.append(msg.strip())
         socketio.emit("log", msg.strip())
