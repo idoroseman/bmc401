@@ -77,21 +77,29 @@ const TimersCard = (props) => {
 }
 
 //------------------------------------------------------------------------------
-const ImagingCard = (props) =>
-  <Card>
+const ImagingCard = (props) => {
+  const [pictureUrl, setPictureUrl] = React.useState("");
+
+  return <Card>
   <Card.Img variant="top" src={header_right} />
   <Card.Body>
     <Card.Title>Images</Card.Title>
     <Card.Text>
-      <img src={'/imaging?hash=' + props.image_hash} width="320px"/>
+      <img src={'/imaging'+pictureUrl+'?hash=' + props.image_hash} width="320px"/>
       <br/>
-      {props.image_hash}
+      <div onChange={(e)=>{setPictureUrl(e.target.value)}}>
+        <input type="radio" value="" name="camselect" checked={pictureUrl === ""}/> output
+        <input type="radio" value="/rpicam.jpg" name="camselect" checked={pictureUrl === "/rpicam.jpg"}/> rpi
+        <input type="radio" value="/usbcam.jpg" name="camselect" checked={pictureUrl === "/usbcam.jpg"}/> usb
+      </div>
+
     </Card.Text>
   </Card.Body>
   <Card.Footer>
     <Button variant="outline-primary" size="sm" onClick={props.onSnapshot}>recapture</Button>{' '}
   </Card.Footer>
   </Card>
+}
 
 //------------------------------------------------------------------------------
 class Home extends React.Component {
@@ -106,7 +114,7 @@ class Home extends React.Component {
     }
 
     componentDidMount(){
-        this.socket = io.connect("/");
+        this.socket = io.connect("balloon6.local:8080/");
         this.socket.on('connect', ()=>{console.log("connected")});
         this.socket.on('status', (data)=>{ this.setState({'status':data}) });
         this.socket.on('timers', (data)=>{ this.setState({'timers':data}) });
