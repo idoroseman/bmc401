@@ -151,7 +151,7 @@ class SSTV():
 
 if __name__ == "__main__":
     sstv = SSTV()
-    sstv.image = im = sstv.loadFromFile('images/TestCard.jpg')
+    sstv.loadFromFile("data/testcard.jpg")
     start_time = time.time()
     sstv.process()
     end_time = time.time()

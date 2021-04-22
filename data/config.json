@@ -8,7 +8,7 @@
     "PTT": 11,
     "PD": 5,
     "HILO": 13,
-    "BUZZER": 20,
+    "BUZZER": 16,
     "LED1": 17,
     "LED2":27,
     "GPS_RST":23

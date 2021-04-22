@@ -133,11 +133,11 @@ class BalloonMissionComputer():
 
     # ---------------------------------------------------------------------------
     def capture_image(self, archive=True):
-        self.logger.debug("capture start")
+#        self.logger.debug("capture start")
         self.cam.capture()
         if archive:
           self.cam.archive()
-        self.logger.debug("capture end")
+#        self.logger.debug("capture end")
 
     # ---------------------------------------------------------------------------
     def prep_image(self, id, gpsdata, sensordata):
@@ -320,6 +320,7 @@ class BalloonMissionComputer():
                     self.modem.saveToFile(os.path.join(self.tmp_dir, 'coef.wav'))
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'coef.wav'))
 
+
                 if self.timers.expired("Capture"):
                     self.capture_image()
 
@@ -334,7 +335,8 @@ class BalloonMissionComputer():
                     self.imaging_counter += 1
                     cam_select = self.imaging_counter % CAMERAS
                     cam_system = self.imaging_counter % (CAMERAS+1)
-                    self.logger.info("imageing")
+                    self.logger.info("imageing trigger")
+                    self.logger.debug("cam %s system %s" % (cam_select, cam_system))
                     self.capture_image(archive=False)
                     self.prep_image(cam_select, gpsdata, sensordata)
                     self.webserver.snapshot()
@@ -346,11 +348,13 @@ class BalloonMissionComputer():
                         _thread.start_new_thread(self.process_ssdv, () )
 
                 if self.timers.expired("PLAY-SSDV"):
+                    self.logger.debug("sending ssdv")
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'starting_ssdv.wav'))
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'habhub.wav'))
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
 
                 if self.timers.expired("PLAY-SSTV"):
+                        self.logger.debug("sending sstv")
                         self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'switching_to_sstv.wav'))
                         self.radio_queue(self.config['frequencies']['SSTV'], os.path.join("data", 'starting_sstv.wav'))
                         self.radio_queue(self.config['frequencies']['SSTV'], os.path.join(self.tmp_dir, 'sstv.wav'))
