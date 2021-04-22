@@ -21,7 +21,8 @@ class Camera():
         # Create the in-memory stream
         self.stream = BytesIO()
         self.camera = PiCamera()
-        #self.camera.rotation = 180
+        self.camera.rotation = 0
+        self.camera.resolution = (1024, 768)
         self.camera.awb_mode = 'auto' # 'sunlight'
         time.sleep(2)
         self.basepath = path
@@ -45,6 +46,7 @@ class Camera():
             # "Rewind" the stream to the beginning so we can read its content
             self.stream.seek(0)
             self.image1 = Image.open(self.stream).convert("RGBA")
+            self.image1.convert("RGB").save("tmp/rpicam.jpg","jpeg")
             if self.isFisheye:
                 self.image1 = self.zoom(self.image1, self.border)
             self.status['cam1'] = "ok"
