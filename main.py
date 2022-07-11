@@ -9,15 +9,18 @@ import _thread
 import subprocess
 import logging
 
+from sensors.bmp085 import Bmp085
+from sensors.ds18b20 import Ds18b20
+from sensors.mcp3002 import Mcp3002
+
 try:
     # rpi hardware specific
     import RPi.GPIO as GPIO
-    from dorji import Dorji
-    from sensors import Sensors
-    from camera import Camera
 except Exception as x:
-    print(x)
+    from mockgpio import MockGPIO as GPIO
 
+from radios.dorji import Dorji
+from camera import Camera
 from aprs import APRS
 from modem import AFSK
 from ublox import Ublox
@@ -25,7 +28,7 @@ from timers import Timers
 from ssdv import SSDV
 from sstv import SSTV
 from webserver import WebServer
-from watchdog import Watchdog
+from watchdog import Watchdog, WatchdogError
 
 import threading
 import queue
@@ -46,8 +49,7 @@ class MyLogHandler(logging.StreamHandler):
 class BalloonMissionComputer():
     # ---------------------------------------------------------------------------
     def __init__(self):
-        if not os.path.exists('tmp/'):
-            os.makedirs('tmp/')
+        os.makedirs('tmp/', exist_ok=True)
         logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s: %(message)s', 
                             level=logging.DEBUG,
                             datefmt='%Y-%m-%d %H:%M:%S')
@@ -178,6 +180,15 @@ class BalloonMissionComputer():
         GPIO.output(self.config['pins']['GPS_RST'], GPIO.HIGH)
 
     # ---------------------------------------------------------------------------
+    def get_sensors_data(self):
+        sensordata = {}
+        sensordata.update(self.sensor_temp.read())
+        sensordata.update(self.sensor_baro.read())
+        sensordata.update(self.sensor_battery.read())
+        sensordata.update(self.cam.status)
+        return sensordata
+
+    # ---------------------------------------------------------------------------
     def setup(self):
         self.logger.info("--------------------------------------")
         self.logger.info("   Balloon Mission Computer V4.01     ")
@@ -185,7 +196,7 @@ class BalloonMissionComputer():
         self.logger.debug("setup")
 
         # setup files and directories
-        with open('data/config.json') as fin:
+        with open('assets/config.json') as fin:
             self.config = json.load(fin)
         self.images_dir = self.config["directories"]["images"] if "directories" in self.config and "images" in self.config["directories"] else "./images"
         self.tmp_dir = self.config["directories"]["tmp"] if "directories" in self.config and "tmp" in self.config["directories"] else "./tmp"
@@ -206,23 +217,23 @@ class BalloonMissionComputer():
         # modules
         self.aprs = APRS(self.config['callsign'], self.config['ssid'], "idoroseman.com")
         self.modem = AFSK()
-        try:
-            self.gps = Ublox()
-            self.gps.start()
-        except:
-            pass
+        self.gps = Ublox()
+        self.gps.start()
+
         self.radio = Dorji(self.config['pins'])
         self.radio.init()
         self.radio_q = queue.Queue()
         self.radio_thread = threading.Thread(target=self.radio_worker)
         self.radio_thread.start()
         self.timers = Timers(self.config['timers'])
-        self.sensors = Sensors()
+        self.sensor_temp = Ds18b20("outside")
+        self.sensor_baro = Bmp085()
+        self.sensor_battery = Mcp3002("battery")
         self.cam = Camera()
         self.ssdv = SSDV(self.config['callsign'], self.config['ssid'])
         self.sstv = SSTV()
         self.webserver = WebServer()
-        self.radio_queue(self.config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
+        self.radio_queue(self.config['frequencies']['APRS'], 'assets/boatswain_whistle.wav')
 
         self.syslog = logging.getLogger()
         kh = MyLogHandler()
@@ -247,6 +258,7 @@ class BalloonMissionComputer():
         self.send_bulltin()
         GPIO.output(self.config['pins']['LED1'], GPIO.LOW)
 
+
     # ---------------------------------------------------------------------------
     def run(self):
         self.logger.debug("run")
@@ -262,23 +274,21 @@ class BalloonMissionComputer():
                 watchdog = Watchdog(60)
 
                 # gps
-                self.gps.loop()
+                self.gps.housekeeping()
                 gpsdata = self.gps.get_data()
                 self.calc_balloon_state(gpsdata)
                 if gpsdata['status'] == "fix" and gpsdata['alt'] > 0:
-                    self.sensors.calibrate_alt(gpsdata['alt'])
+                    self.sensor_baro.calibrate_alt(gpsdata['alt'])
                 if gpsdata['status'] != "fix":
-                    gpsdata['alt'] = self.sensors.read_pressure()
+                    gpsdata['alt'] = self.sensor_baro.read_pressure()
 
                 # sensors
-                sensordata = self.sensors.get_data()
-                sensordata.update(self.cam.status)
+                sensordata = self.get_sensors_data()
                 status_bits = self.calc_status_bits(gpsdata, sensordata)
                 telemetry['Satellites'] = gpsdata['SatCount'] * telemCoef['SatCount']
-                telemetry['outside_temp'] = sensordata['outside_temp'] * telemCoef['outside_temp']
-                telemetry['inside_temp'] = sensordata['inside_temp'] * telemCoef['inside_temp']
-                telemetry['barometer'] = sensordata['barometer'] * telemCoef['barometer']
-                telemetry['battery'] = sensordata['battery'] * telemCoef['battery']
+                for s in ['outside_temp', 'inside_temp', 'barometer', 'battery']:
+                    telemetry[s] = sensordata[s] * telemCoef[s] if s in sensordata else "err"
+
 
                 if gpsdata['status'] != self.prev_gps_status:
                     frame = self.aprs.create_telem_data_msg(telemetry, status_bits, gpsdata['alt'])
@@ -349,14 +359,14 @@ class BalloonMissionComputer():
 
                 if self.timers.expired("PLAY-SSDV"):
                     self.logger.debug("sending ssdv")
-                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'starting_ssdv.wav'))
-                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'habhub.wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join("assets", 'starting_ssdv.wav'))
+                    self.radio_queue(self.config['frequencies']['APRS'], os.path.join("assets", 'habhub.wav'))
                     self.radio_queue(self.config['frequencies']['APRS'], os.path.join(self.tmp_dir, 'ssdv.wav'))
 
                 if self.timers.expired("PLAY-SSTV"):
                         self.logger.debug("sending sstv")
-                        self.radio_queue(self.config['frequencies']['APRS'], os.path.join("data", 'switching_to_sstv.wav'))
-                        self.radio_queue(self.config['frequencies']['SSTV'], os.path.join("data", 'starting_sstv.wav'))
+                        self.radio_queue(self.config['frequencies']['APRS'], os.path.join("assets", 'switching_to_sstv.wav'))
+                        self.radio_queue(self.config['frequencies']['SSTV'], os.path.join("assets", 'starting_sstv.wav'))
                         self.radio_queue(self.config['frequencies']['SSTV'], os.path.join(self.tmp_dir, 'sstv.wav'))
 
                 if self.timers.expired("Buzzer"):
@@ -370,7 +380,7 @@ class BalloonMissionComputer():
                 watchdog.stop()
                 time.sleep(1)
 
-            except Watchdog:
+            except WatchdogError:
                 self.logger.error("task timedout!")
             except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
                 exitFlag = True

@@ -10,6 +10,7 @@ import threading
 import requests
 import time
 import logging
+import json
 
 from timers import Timers
 
@@ -48,6 +49,9 @@ def test_connect():
     emit("status", {})
     emit('gps', gpsdata)
     emit('sensors', telemetry)
+    with open('assets/config.json') as fin:
+        config = json.load(fin)
+        emit('mission', { 'name':config['name'].capitalize(), 'callsign': '-'.join([ config['callsign'], str(config['ssid'])])})
 
 @socketio.on('timer')
 def handle_timer(data):
@@ -111,7 +115,7 @@ def show(sensor='image.jpg'):
         return send_from_directory('tmp',sensor)
     except Exception as x:
         print(x)
-        return send_from_directory('data', 'testcard.jpg')
+        return send_from_directory('assets', 'testcard.jpg')
 
 gpsdata = {'status': 'fix',
            'latDir': 'N',
@@ -161,7 +165,7 @@ start_time = datetime.datetime.now()
 #             f.close()
 #             return
 #         elif self.path.endswith(".png"):
-#             f = open('data/' + self.path, "rb")
+#             f = open('assets/' + self.path, "rb")
 #             self.send_response(200)
 #             self.send_header('Content-type', 'image/png')
 #             self.end_headers()

@@ -23,9 +23,9 @@ from kiss import KISS
 # 11	Flags	        1	00qqqexx: 00 = Reserved, qqq = JPEG quality level (0-7 XOR 4), e = EOI flag (1 = Last Packet), xx = Subsampling Mode
 # 12	MCU offset  	1	Offset in bytes to the beginning of the first MCU block in the payload, or 0xFF if none present
 # 13	MCU index	    2	The number of the MCU pointed to by the offset above (big endian), or 0xFFFF if none present
-# 15	Payload         205	Payload data
+# 15	Payload         205	Payload assets
 # 220	Checksum	    4	32-bit CRC
-# 224	FEC	            32	Reed-Solomon forward error correction data. Normal mode only (0x66)
+# 224	FEC	            32	Reed-Solomon forward error correction assets. Normal mode only (0x66)
 
 class aprs2ssdv():
     def __init__(self, callsign):
@@ -75,7 +75,7 @@ class aprs2ssdv():
         src, dest = tokens[0].split(">")
         receiver = tokens[-1]
         if dest == 'APE6UB' :
-            print("data:", payload.strip())
+            print("assets:", payload.strip())
             if payload.startswith("{{"):
               with open("log/ssdv.log","a+") as f:
                  f.write(msg);

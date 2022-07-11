@@ -53,7 +53,7 @@ class Timers(Borg):
     def set_state(self, name, enabled):
         self.state[name] = enabled
         for func in self._listeners:
-            print(func)
+            # print(func)
             func()
 
     def trigger(self, name):

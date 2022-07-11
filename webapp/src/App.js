@@ -109,12 +109,14 @@ class Home extends React.Component {
         this.state = { timers: {} ,
                         sensors: {},
                         gps:{},
-                        status:{ }
+                        status:{ },
+                        name: "Ballon",
+                        callsign: "N0CALL"
                         }
     }
 
     componentDidMount(){
-        this.socket = io.connect("balloon6.local:8080/");
+        this.socket = io.connect("/");
         this.socket.on('connect', ()=>{console.log("connected")});
         this.socket.on('status', (data)=>{ this.setState({'status':data}) });
         this.socket.on('timers', (data)=>{ this.setState({'timers':data}) });
@@ -124,6 +126,7 @@ class Home extends React.Component {
         this.socket.on('debug', (data)=>{ console.log(data) });
         this.socket.on('disconnect', ()=>{console.log("disconnected")});
         this.socket.on('log', (data)=>{console.log(data);});
+        this.socket.on('mission', (data)=>{ this.setState(data)})
     }
 
     render(){

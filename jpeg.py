@@ -184,7 +184,7 @@ class JPEG():
         while (self.reservoir_length < n):
             self.reservoir_bits <<= 8
             self.reservoir_bits |= self.data[self.index]
-            # print "%02x " % self.data[self.index],
+            # print "%02x " % self.assets[self.index],
             self.reservoir_length += 8
             if self.data[self.index] == 0xff and self.data[self.index+1] == 0x00: # de-stuff
                 self.index += 1
@@ -270,8 +270,8 @@ class JPEG():
     def decode_markers(self):
         while (True):
             marker, data = self.read_segment()
-            # print "marker %04x %s size %s" % (marker.value, marker, len(data))
-            # print data
+            # print "marker %04x %s size %s" % (marker.value, marker, len(assets))
+            # print assets
             if marker == Marker.APP0:
                 self.parse_app0(data)
             elif marker == Marker.SOF0:
@@ -287,5 +287,5 @@ class JPEG():
     def decode(self):
         self.decode_scan()
 
-jpeg = JPEG('/Users/ido/Dropbox/Hobby Projects/Python/bmc401/data/huff_simple0.jpg')
+jpeg = JPEG('/assets/huff_simple0.jpg')
 jpeg.decode()

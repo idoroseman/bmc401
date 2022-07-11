@@ -3,7 +3,10 @@ import os
 import sys
 import time
 import serial
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except:
+    from mockgpio import MockGPIO as GPIO
 import json
 import logging
 
@@ -28,6 +31,7 @@ class Dorji():
 
         os.system('gpio -g mode 18 alt5')  # sets GPIO 18 pin to ALT 5 mode = GPIO_GEN1
 
+
         try:
             self.ser = serial.Serial(
                 port='/dev/ttyS0',
@@ -39,13 +43,15 @@ class Dorji():
                 write_timeout=1
             )
         except:
-            pass
+            self.ser = None
 
         self.isOK = False
         self.verbose = True
         self.init()
 
     def cmnd(self, data):
+        if self.ser is None:
+            return
         while True:
             try:
                 self.logger.debug(">%s"% data.strip())
@@ -55,10 +61,10 @@ class Dorji():
                 self.logger.debug("<%s" % x.strip())
                 if x.startswith('+') or x.startswith("S="):
                     self.isOK = True
-                    break;
+                    break
                 self.logger.debug("retry cmnd send")
             except Exception as x:
-                self.logger.exception(x)
+                self.logger.error(x)
                 break
 
     def init(self):
@@ -79,6 +85,7 @@ class Dorji():
         GPIO.output(self.pin['PD'], GPIO.HIGH)
         GPIO.output(self.pin['PTT'], GPIO.LOW)
         GPIO.output(self.pin['LED2'], GPIO.HIGH)
+
 
     def rx(self):
         self.logger.debug("radio rx")
@@ -111,7 +118,7 @@ class Dorji():
 
 if __name__ == "__main__":
     # Pin Definitions
-    with open('data/config.json') as fin:
+    with open('../assets/config.json') as fin:
         config = json.load(fin)
         pins = config['pins']
 
@@ -135,7 +142,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "power":
         radio.power(sys.argv[2])
     elif sys.argv[1] == "test":
-        radio.play(config['frequencies']['APRS'], 'data/boatswain_whistle.wav')
+        radio.play(config['frequencies']['APRS'], 'assets/boatswain_whistle.wav')
     elif sys.argv[1] == "play":
         radio.play(config['frequencies']['APRS'], sys.argv[2])
     else:

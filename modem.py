@@ -45,7 +45,7 @@ class AFSK():
             for i in range(flags_before):
                 self.write_byte(0x7E, 0)
 
-            # Create and write actual data
+            # Create and write actual assets
             for i in range(message_length):
                 self.write_byte(msg[i], 1)
 
