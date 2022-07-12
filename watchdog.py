@@ -2,6 +2,9 @@
 
 from threading import Timer
 
+class WatchdogError(Exception):
+    pass
+
 class Watchdog:
     def __init__(self, timeout, userHandler=None):  # timeout in seconds
         self.timeout = timeout
@@ -18,4 +21,4 @@ class Watchdog:
         self.timer.cancel()
 
     def defaultHandler(self):
-        raise Exception()
+        raise WatchdogError()

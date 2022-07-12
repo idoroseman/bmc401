@@ -1,17 +1,17 @@
 { 
-  "name": "balloon6",
+  "name": "balloon7",
   "description": "testing",
   "callsign": "4x6ub",
   "tagline": "idoroseman.com",
   "ssid": 11,
   "pins": {
-    "PTT": 11,
-    "PD": 5,
-    "HILO": 13,
-    "BUZZER": 16,
-    "LED1": 17,
-    "LED2":27,
-    "GPS_RST":23
+    "PTT": 24,
+    "PD": 22,
+    "HILO": 23,
+    "BUZZER": 26,
+    "LED1": 21,
+    "LED2":20,
+    "GPS_RST":17
   },
   "timers":{
    "APRS": 3,

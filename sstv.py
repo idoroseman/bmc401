@@ -25,11 +25,11 @@ class SSTV():
 
 
     # addvisheader - - Add the specific audio tones that make up the
-    # Martin 1 VIS header to the audio data.Basically,
+    # Martin 1 VIS header to the audio assets.Basically,
     # this just means lots of calls to playtone().
 
     def addvisheader(self):
-        self.logger.info("Adding VIS header to audio data.")
+        self.logger.info("Adding VIS header to audio assets.")
 
         # bit of silence
         self.playtone(0, 500000)
@@ -51,7 +51,7 @@ class SSTV():
         self.playtone(1900, 300000)
         self.playtone(1200, 30000)
 
-        # VIS data bits(Martin 1)
+        # VIS assets bits(Martin 1)
         self.playtone(1300, 30000)
         self.playtone(1300, 30000)
         self.playtone(1100, 30000)
@@ -69,7 +69,7 @@ class SSTV():
 
     def addvistrailer(self):
 
-        self.logger.info("Adding VIS trailer to audio data.")
+        self.logger.info("Adding VIS trailer to audio assets.")
 
         self.playtone(2300, 300000)
         self.playtone(1200, 10000)
@@ -79,7 +79,7 @@ class SSTV():
         # bit of silence
         self.playtone(0, 500000)
 
-        self.logger.info("Done adding VIS trailer to audio data.")
+        self.logger.info("Done adding VIS trailer to audio assets.")
 
     # toneval -- Map an 8-bit value to a corresponding number between
     #            1500 and 2300, on a simple linear scale. This is used
@@ -89,15 +89,15 @@ class SSTV():
     def toneval(self, colorval):
         return ((800 * colorval) / 256) + 1500
 
-    # buildaudio -- Primary code for converting image data to audio.
-    #               Reads color data for individual pixels from a libGD
-    #               object, calls toneval() to convert the color data
+    # buildaudio -- Primary code for converting image assets to audio.
+    #               Reads color assets for individual pixels from a libGD
+    #               object, calls toneval() to convert the color assets
     #               to an audio frequency, then calls playtone() to add
-    #               that to the audio data. This routine assumes an image
+    #               that to the audio assets. This routine assumes an image
     #               320 wide x 256 tall x 24 bit colorspace (8 bits each
     #               for R, G, and B).
     #
-    #               In Martin 1, the image data is sent one row at a time,
+    #               In Martin 1, the image assets is sent one row at a time,
     #               once for green, once for blue, and once for red. There
     #               is a separator tone between each channel's audio, and
     #               a sync tone at the beginning of each new row. This
@@ -108,13 +108,13 @@ class SSTV():
         g = [0] * 320
         b = [0] * 320
 
-        self.logger.info("Adding image to audio data.")
+        self.logger.info("Adding image to audio assets.")
         pixels, lines = SSTVImageSize
         for y in range(lines):
 
             # self.logger.info( "Row [%d] Sample [%d].\n" , y , g_samples ) ;
 
-            # read image data
+            # read image assets
             for x in range(pixels):
                 r[x], g[x], b[x] = self.image.getpixel((x, y))
 
@@ -142,7 +142,7 @@ class SSTV():
 
             self.playtone(1500, 572)
 
-        self.logger.info("Done adding image to audio data.")
+        self.logger.info("Done adding image to audio assets.")
 
     def loadFromFile(self, filename):
         self.image = Image.open(filename)
@@ -151,9 +151,9 @@ class SSTV():
 
 if __name__ == "__main__":
     sstv = SSTV()
-    sstv.loadFromFile("data/testcard.jpg")
+    sstv.loadFromFile("assets/testcard.jpg")
     start_time = time.time()
     sstv.process()
     end_time = time.time()
-    sstv.saveToFile('data/sstv.wav')
+    sstv.saveToFile('assets/sstv.wav')
     print("%s seconds" % (end_time-start_time))

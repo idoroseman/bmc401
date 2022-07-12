@@ -9,7 +9,7 @@ class ax25():
         self.add_callsign(path2, ttl2)
         self.mark_end_of_callsigns()
         self.add_byte(0x03) # Control: 0x03 = APRS-UI frame
-        self.add_byte(0xF0) # Protocol ID: 0xF0 = no layer 3 data
+        self.add_byte(0xF0) # Protocol ID: 0xF0 = no layer 3 assets
 
     def add_callsign(self, callsign, ssid):
         for i in callsign.ljust(6):

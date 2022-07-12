@@ -77,7 +77,7 @@ def onMessage(msg):
     tokens = header.split(',')
     src, dest = tokens[0].split(">")
     if dest == 'APE6UB':
-        print("data:", payload)
+        print("assets:", payload)
 
 if __name__ == "__main__":
     client = APRSISClient(callsign="4X6UB")

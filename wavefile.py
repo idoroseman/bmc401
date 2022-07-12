@@ -37,7 +37,7 @@ class WaveFile():
         self.logger.debug("")
 
 
-    # playtone - - Add waveform info to audio data.New waveform data is
+    # playtone - - Add waveform info to audio assets.New waveform assets is
     # added in a phase - continuous manner according to the
     # audio frequency and duration provided.Note that the
     # audio is still in a purely hypothetical state - the
@@ -68,7 +68,7 @@ class WaveFile():
         byterate = self.g_rate * CHANS * BITS / 8  # audio bytes / sec
         blockalign = CHANS * BITS / 8  # total bytes / sample
 
-        self.logger.debug("Writing audio data to file %s"%filename)
+        self.logger.debug("Writing audio assets to file %s"%filename)
         self.logger.debug("Got a total of [%d] samples." % self.g_samples)
 
         # RIFF header
@@ -93,7 +93,7 @@ class WaveFile():
         rv += ['d', 'a', 't', 'a']  # header
         rv += list(unhexlify("%08x" % int(audiosize)))[::-1]  # audio bytes total (LE!!)
 
-        # FINALLY, the audio data itself (LE!!)
+        # FINALLY, the audio assets itself (LE!!)
         for i in range(self.g_samples):
             v = self.g_audio[i]
             rv += [(v & 0xff), ((v >> 8) & 0xff)]

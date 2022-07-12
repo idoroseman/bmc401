@@ -7,7 +7,10 @@ import time
 import io
 import json
 import fcntl
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except:
+    from mockgpio import MockGPIO as GPIO
 try:
     import smbus
 except:
@@ -36,19 +39,27 @@ device = 0x42
 # sudo bash -c "echo options i2c_bcm2708 baudrate=50000 > /etc/modprobe.d/i2c.conf"
 
 class communicationThread(threading.Thread):
-    def __init__(self, onNMEA, onUBLOX):
+    def __init__(self, onNMEA, onUBLOX, onError):
         threading.Thread.__init__(self)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         self.onNMEA = onNMEA
         self.onUBLOX = onUBLOX
+        self.onError = onError
+
         # setup i2c
-        I2C_SLAVE = 0x0703
-        self.fr = io.open("/dev/i2c-" + str(bus), "r+b", buffering=0)
-        self.fw = io.open("/dev/i2c-" + str(bus), "w+b", buffering=0)
-        # set device address
-        fcntl.ioctl(self.fr, I2C_SLAVE, device)
-        fcntl.ioctl(self.fw, I2C_SLAVE, device)
+        try:
+            I2C_SLAVE = 0x0703
+            self.fr = io.open("/dev/i2c-" + str(bus), "r+b", buffering=0)
+            self.fw = io.open("/dev/i2c-" + str(bus), "w+b", buffering=0)
+            # set device address
+            fcntl.ioctl(self.fr, I2C_SLAVE, device)
+            fcntl.ioctl(self.fw, I2C_SLAVE, device)
+            self.isOk = True
+        except:
+            self.onError("gps i2c error")
+            self.isOk = False
+
         self.exitFlag = False
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
@@ -133,6 +144,8 @@ class communicationThread(threading.Thread):
                 elif ch == ord('$'):
                     rxNMEA = True
                     response = chr(ch)
+            except AttributeError:
+                self.stop()
             except Exception as x:
                 self.logger.exception(("Exception: %s" % x))
                 print_exc()
@@ -148,6 +161,7 @@ class Ublox():
         self.cb = cb
 
         self.isInFlightMode = False
+        self.comm_thread = None
 
         self.lastFixTime = time.time()
         self.lastCommTime = time.time()
@@ -167,37 +181,36 @@ class Ublox():
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)  # Broadcom pin-numbering scheme
 
-
-    def gps_reset(self):
-        self.logger.warning("GPS Reset!")
-        with open('data/config.json') as fin:
-            config = json.load(fin)
-        self.logger.warning("reset gps")
-        GPIO.setup(config['pins']['GPS_RST'], GPIO.OUT)
-        GPIO.output(config['pins']['GPS_RST'], GPIO.LOW)
-        time.sleep(1)
-        GPIO.output(config['pins']['GPS_RST'], GPIO.HIGH)
-
-    def start(self):
-        self.gps_reset()
-        if self.bit() == 0:
-          self.comm_thread = communicationThread(self.nmea_handler, self.ublox_handler)
-          self.comm_thread.start()
-        else:
-          raise Exception("GPS not connected")
-
     def bit(self):
         for retry in range(5):
           try:
             bus = smbus.SMBus(1)
             bus.read_byte(device)
             return False
-          except:
+          except NameError:
+              return True
+          except Exception as x:
             time.sleep(1)
         return True
 
+    def gps_reset(self):
+        if self.comm_thread is not None:
+            self.comm_thread.stop()
+        with open('assets/config.json') as fin:
+            config = json.load(fin)
+        self.logger.warning("GPS Reset!")
+        GPIO.setup(config['pins']['GPS_RST'], GPIO.OUT)
+        GPIO.output(config['pins']['GPS_RST'], GPIO.LOW)
+        time.sleep(1)
+        GPIO.output(config['pins']['GPS_RST'], GPIO.HIGH)
+        self.isInFlightMode = False
+        self.comm_thread = communicationThread(self.nmea_handler, self.ublox_handler, self.error_handler)
+        self.comm_thread.start()
+
+    def start(self):
+        self.gps_reset()
+
     def stop(self):
-        self.exitFlag = True
         self.comm_thread.stop()
 
     def get_data(self):
@@ -208,7 +221,10 @@ class Ublox():
           self.logger.info("gps status changed from %s to %s" % (self.GPSDAT['status'], new_status))
         self.GPSDAT['status']=new_status
 
-    def loop(self):
+    def housekeeping(self):
+        if not self.comm_thread.isOk:
+            self.set_status( no_i2c )
+            return
         if not self.isInFlightMode:
             self.logger.info("set flight mode !")
             self.comm_thread.send_bytes(setNavCmnd)
@@ -249,7 +265,7 @@ class Ublox():
                 self.GPSDAT['alt'] = float(self.GPSDAT['alt_raw']) # + self.sim_alt * (1-math.cos(self.sim_t))
         except Exception as x:
             self.logger.exception(x)
-            self.logger.error("bad data while calc files")
+            self.logger.error("bad assets while calc files")
             return
 
         if printFix:
@@ -394,6 +410,8 @@ class Ublox():
             if verbose:
                 self.logger.info(("ublox: %s" % buffer))
 
+    def error_handler(self, status):
+        pass
 
 #########################################################################
 #                      M A I N
@@ -405,7 +423,7 @@ if __name__ == "__main__":
     gps.start()
     while True:
         try:
-            gps.loop()
+            gps.housekeeping()
             time.sleep(5)
         except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
             gps.stop()

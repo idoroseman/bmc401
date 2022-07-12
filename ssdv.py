@@ -58,9 +58,9 @@ def parse_ssdv_bin():
             packet['mcuIndex'] = bytearray_to_int(header[13:15])
 
             if ord(header[1]) == 0x66: # noremal
-                packet['data'] = f.read(237)
+                packet['assets'] = f.read(237)
             elif ord(header[1]) == 0x67: # no-FEC
-                packet['data'] = f.read(205)
+                packet['assets'] = f.read(205)
             packet['crc'] = f.read(4)
 
 
@@ -136,9 +136,9 @@ class SSDV():
         # 11	Flags	1	[7:6] reserved, [5:3] JPEG quality, [2] EOI flag, [1:0] subsampling
         # 12	MCU Offset	1	Offset (bytes) to the beginning of the first MCU block in payload.
         # 13	MCU Index	2	The number of the MCU pointed to by the offset above.
-        # 15	Payload	    205	Payload data.
+        # 15	Payload	    205	Payload assets.
         # 220	Checksum	4	32-bit CRC.
-        # 224	FEC	32	Reed-Solomon forward error correction data.
+        # 224	FEC	32	Reed-Solomon forward error correction assets.
         rv = []
         counter = 0
         with open(filename, "rb") as f:
@@ -203,7 +203,7 @@ if __name__ == "__main__":
 #                  }
 #    cam.overlay('4x6ub', gpsdata, sensordata)
 #    cam.saveToFile('tmp/ssdv.jpg')
-#     ssdv.convert('data/testcard.jpg', 'tmp/image.ssdv')
+#     ssdv.convert('assets/testcard.jpg', 'tmp/image.ssdv')
 #     packets = ssdv.prepare("tmp/image.ssdv")
 #     print(len(packets),"packets")
 #     with open('tmp/ssdv_packets.txt','w') as f:
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     end_time = time.time()
     print("totl took %s seconds" % (end_time - start_time))
 
-    # with open('data/ssdv.packets', "wb") as f:
+    # with open('assets/ssdv.packets', "wb") as f:
     #     for p in raw:
     #         f.write(bytearray(p+'\n'))
 

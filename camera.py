@@ -1,7 +1,10 @@
 import os
 import time
 from io import BytesIO
-from picamera import PiCamera
+try:
+    from picamera import PiCamera
+except:
+    pass
 from PIL import Image, ImageFont, ImageDraw
 import datetime
 import logging
@@ -20,13 +23,16 @@ class Camera():
         self.border = 10 # percent
         # Create the in-memory stream
         self.stream = BytesIO()
-        self.camera = PiCamera()
-        self.camera.rotation = 0
-        self.camera.resolution = (1024, 768)
-        self.camera.awb_mode = 'auto' # 'sunlight'
+        try:
+            self.camera = PiCamera()
+            self.camera.rotation = 0
+            self.camera.resolution = (1024, 768)
+            self.camera.awb_mode = 'auto' # 'sunlight'
+        except:
+            self.camera = None
         time.sleep(2)
         self.basepath = path
-        self.logo = Image.open("data/logo.png").convert("RGBA")
+        self.logo = Image.open("assets/logo.png").convert("RGBA")
         self.mask = self.logo.copy()
         self.logo.putalpha(150)
         #opacity_level = 127
@@ -38,6 +44,11 @@ class Camera():
         #    newData.append(item)
         #self.logo.putdata(newData)
         self.status = { "cam1":"ok", "cam2":"ok" }
+        try:
+            self.font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 15)
+        except:
+            self.font = None
+
 
     def capture(self):
         try:
@@ -51,13 +62,12 @@ class Camera():
                 self.image1 = self.zoom(self.image1, self.border)
             self.status['cam1'] = "ok"
         except Exception as x:
-            self.logger.exception(x)
+            self.logger.error(x)
             self.image1 = Image.new("RGBA", (320,256))
             red = (255, 0, 0, 255)
             draw = ImageDraw.Draw(self.image1)
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 15)
-            draw.text((10,100), "ERROR", red, font);
-            draw.text((10,120), str(x), red, font);
+            draw.text((10,100), "ERROR", red, self.font);
+            draw.text((10,120), str(x), red, self.font);
             self.status['cam1'] = "err"
 
         try:
