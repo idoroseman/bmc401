@@ -29,9 +29,12 @@ class Sensors():
         self.logger.setLevel(logging.DEBUG)
         logging.getLogger("Adafruit_BMP.BMP085").setLevel(logging.WARNING)
         logging.getLogger("Adafruit_I2C.Device.Bus.1.Address.0X77").setLevel(logging.WARNING)
-        self.w1_base_dir = '/sys/bus/w1/devices/'
-        self.w1_device_folder = glob.glob(self.w1_base_dir + '28*')[0]
-        self.w1_device_file = self.w1_device_folder + '/w1_slave'
+        try:
+            self.w1_base_dir = '/sys/bus/w1/devices/'
+            self.w1_device_folder = glob.glob(self.w1_base_dir + '28*')[0]
+            self.w1_device_file = self.w1_device_folder + '/w1_slave'
+        except:
+            pass
         for retries in range(5):
           try:
             self.sensor = BMP085.BMP085()
@@ -55,10 +58,13 @@ class Sensors():
         }
 
     def read_temp_raw(self):
-        f = open(self.w1_device_file, 'r')
-        lines = f.readlines()
-        f.close()
-        return lines
+        try:
+            f = open(self.w1_device_file, 'r')
+            lines = f.readlines()
+            f.close()
+            return lines
+        except:
+            return []
 
     def read_pressure(self):
         pressure = 900
