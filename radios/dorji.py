@@ -52,7 +52,8 @@ class Dorji():
     def cmnd(self, data):
         if self.ser is None:
             return
-        while True:
+        retries = 3
+        while retries>0:
             try:
                 self.logger.debug(">%s"% data.strip())
                 self.ser.write(data.encode())
@@ -63,6 +64,7 @@ class Dorji():
                     self.isOK = True
                     break
                 self.logger.debug("retry cmnd send")
+                retries -= 1
             except Exception as x:
                 self.logger.error(x)
                 break

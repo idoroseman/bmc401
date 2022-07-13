@@ -80,7 +80,7 @@ class communicationThread(threading.Thread):
         while ch == 255:
             try:
                 if self.exitFlag:
-                    return ch[0]
+                    return 255
                 ch = self.fr.read(1)
                 if ch == 255:
                     time.sleep(0.1)
