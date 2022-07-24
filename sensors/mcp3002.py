@@ -6,7 +6,7 @@ except:
     from mockgpio import MockGPIO as GPIO
 
 # Define SPI Pins
-SPICLK = 22
+SPICLK = 11
 SPIMISO = 9
 SPIMOSI = 10
 SPICS = 8
@@ -64,7 +64,7 @@ class Mcp3002(BmcSensor):
     def read(self):
         # read the analog pin
         reps = 10
-        adcnum = 1
+        adcnum = 0
         adctot = 0
         for i in range(reps):
             read_adc = self.readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
@@ -75,6 +75,13 @@ class Mcp3002(BmcSensor):
 
         # convert analog reading to Volts = ADC * ( 3.33 / 1024 )
         # 3.33 tweak according to the 3v3 measurement on the Pi
-        volts = read_adc * (3.33 / 1024.0) * 6
+        volts = read_adc * (3.33 / 1024.0) * 2 * 2.44
         #        self.logger.debug("Battery Voltage: %.2f" % volts)
         return {self.prefix+"V": round(volts, 2)}
+
+if __name__ == "__main__":
+    GPIO.setwarnings(False)
+    sensor_battery = Mcp3002()
+    while True:
+        print(sensor_battery.read())
+        time.sleep(5)

@@ -47,6 +47,7 @@ syntax: regexp
 # Misc
 .DS_Store
 ._.DS_Store
+._*
 tmp/*
 images/*
 utils/*
@@ -54,6 +55,7 @@ ssdv/*
 log/*
 .idea/*
 venv/
+cext/build/*
 
 # js
 node_modules/

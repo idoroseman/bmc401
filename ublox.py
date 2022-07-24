@@ -10,6 +10,7 @@ import fcntl
 try:
     import RPi.GPIO as GPIO
 except:
+    print("no real gpio")
     from mockgpio import MockGPIO as GPIO
 try:
     import smbus
@@ -48,6 +49,7 @@ class communicationThread(threading.Thread):
         self.onError = onError
 
         # setup i2c
+        print("init i2c")
         try:
             I2C_SLAVE = 0x0703
             self.fr = io.open("/dev/i2c-" + str(bus), "r+b", buffering=0)
@@ -56,8 +58,8 @@ class communicationThread(threading.Thread):
             fcntl.ioctl(self.fr, I2C_SLAVE, device)
             fcntl.ioctl(self.fw, I2C_SLAVE, device)
             self.isOk = True
-        except:
-            self.onError("gps i2c error")
+        except Exception as x:
+            self.onError(f"gps i2c error: {x}")
             self.isOk = False
 
         self.exitFlag = False
@@ -72,8 +74,8 @@ class communicationThread(threading.Thread):
         data[0:] = buffer[0:]
         try:
             self.fw.write(data)
-        except:
-            self.logger.error("i2c write error")
+        except Exception as x:
+            self.logger.error(f"i2c write error: {x}")
 
     def read_byte(self):
         ch = 255
@@ -209,6 +211,8 @@ class Ublox():
 
     def start(self):
         self.gps_reset()
+        print("i2c bit:", "error" if self.bit() else "ok")
+
 
     def stop(self):
         self.comm_thread.stop()
@@ -424,6 +428,7 @@ if __name__ == "__main__":
     while True:
         try:
             gps.housekeeping()
+            print(gps.GPSDAT)
             time.sleep(5)
         except KeyboardInterrupt:  # If CTRL+C is pressed, exit cleanly
             gps.stop()

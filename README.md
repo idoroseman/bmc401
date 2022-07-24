@@ -17,18 +17,14 @@ while previous version was a mix of c and bash scripts, this time it's written i
 
 ## installation prerequisits on raspberry pi
     sudo apt install git -y
-    sudo apt install python3-pip -y
-    sudo apt install python3-setuptools -y
-    sudo apt install python3-rpi.gpio -y
-    sudo apt install python3-smbus -y
-    sudo apt install wiringpi -y
-    sudo apt install python3-picamera -y
-    sudo apt install python3-pil -y
-    sudo apt install fswebcam -y
+    sudo apt install python3-pip python3-setuptools -y
+    sudo apt install python3-rpi.gpio python3-smbus wiringpi -y
+    sudo apt install python3-picamera python-opencv python3-pil fswebcam -y
+    sudo apt-get install libatlas-base-dev
+    
+    sudo pip3 install numpy==1.21.6
     pip3 install pyserial
     pip3 install flask flask-cors flask-socketio flask-restful
-
-
     
 ### installing adafruit bmp085 support
     git clone https://github.com/adafruit/Adafruit_Python_BMP.git

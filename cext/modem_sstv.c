@@ -10,9 +10,12 @@
 #define CHANS  1
 #define VOLPCT 20
 
-#define COLS 320
-#define ROWS 256
+#define COLS_M1 320
+#define ROWS_M1 256
 #define CHANNELS 3
+
+#define COLS_PD 640
+#define ROWS_PD 480
 
 /* output buffer pointer */
 int16_t    *g_audio_ptr = NULL;
@@ -51,7 +54,6 @@ void playtone( uint16_t tonefreq , double tonedur )
             g_theta += deltatheta ;
         }
     }
-
     g_fudge = tonedur - ( tonesamples * g_uspersample ) ;
 }  // end playtone
 
@@ -60,7 +62,7 @@ void playtone( uint16_t tonefreq , double tonedur )
 //                 Martin 1 VIS header to the audio data. Basically,
 //                 this just means lots of calls to playtone().
 
-void addvisheader()
+void addvisheader(int vis)
 {
     printf( "Adding VIS header to audio data.\n" ) ;
 
@@ -84,16 +86,12 @@ void addvisheader()
     playtone( 1900 , 300000 ) ;
     playtone( 1200 ,  30000 ) ;
 
-    // VIS data bits (Martin 1)
-    playtone( 1300 ,  30000 ) ;
-    playtone( 1300 ,  30000 ) ;
-    playtone( 1100 ,  30000 ) ;
-    playtone( 1100 ,  30000 ) ;
-    playtone( 1300 ,  30000 ) ;
-    playtone( 1100 ,  30000 ) ;
-    playtone( 1300 ,  30000 ) ;
-    playtone( 1100 ,  30000 ) ;
-
+    // VIS data bits 
+    for (int i=0; i<8; i++) {
+        playtone( vis & 0x01 ? 1100 : 1300 ,  30000 ) ;
+        vis >>= 1;
+    }
+    
     // VIS stop
     playtone( 1200 ,  30000 ) ;
 
@@ -146,19 +144,19 @@ uint16_t toneval ( uint8_t colorval )
 //               a sync tone at the beginning of each new row. This
 //               routine handles the sep/sync details as well.
 
-void buildaudio (PyArrayObject *image)
+void buildaudio_m1 (PyArrayObject *image)
 {
     uint16_t x , y , k ;
-    uint8_t r[COLS], g[COLS], b[COLS] ;
+    uint8_t r[COLS_M1], g[COLS_M1], b[COLS_M1] ;
 
     printf( "Adding image to audio data.\n" ) ;
 
-    for ( y=0 ; y<ROWS ; y++ )
+    for ( y=0 ; y<ROWS_M1 ; y++ )
     {
 //        printf( "Row [%d] Sample [%d].\n" , y , g_samples ) ;
 
         // read image data
-        for ( x=0 ; x<COLS ; x++ )
+        for ( x=0 ; x<COLS_M1 ; x++ )
         {
             // get color data
             r[x] = *(unsigned char *)PyArray_GETPTR3(image, y, x, 0);
@@ -197,11 +195,103 @@ void buildaudio (PyArrayObject *image)
 
     printf( "Done adding image to audio data.\n" ) ;
 
-}  // end buildaudio
+}  // end buildaudio_m1
+
+// ----------------------------------------------------------------------------
+// Approximating the equations (1) to (3) to the nearest integer and replacing
+// multiplication and division by shift registers
+// from https://sistenix.com/rgb2ycbcr.html
+void rgb2ycbcr(uint8_t r, uint8_t g, uint8_t b, uint8_t *y, uint8_t *cb, uint8_t *cr)
+{
+    *y = 16 +(((r<<6)+(r<<1)+(g<<7)+g+(b<<4)+(b<<3)+b)>>8);
+    *cb = 128 + ((-((r<<5)+(r<<2)+(r<<1))-((g<<6)+(g<<3)+(g<<1))+(b<<7)-(b<<4))>>8); 
+    *cr = 128 + (((r<<7) -(r<<4)-((g<<6)+(g<<5)-(g<<1))-((b<<4)+(b<<1)))>>8);
+}
+
+// ----------------------------------------------------------------------------
+void buildaudio_pd120 (PyArrayObject *image)
+{
+    uint16_t x , y , k ;
+    uint8_t y1[COLS_PD], cb[COLS_PD], cr[COLS_PD], y2[COLS_PD] ;
+    uint8_t r, g, b, cb1, cr1, cb2, cr2;
+
+    printf( "Adding image to audio data.\n" ) ;
+
+    for ( y=0 ; y<ROWS_PD ; y+=2 )
+    {
+        printf("line %d\n", y);
+        // read image data
+        for ( x=0 ; x<COLS_PD ; x++ )
+        {
+            // get color data
+            r = *(unsigned char *)PyArray_GETPTR3(image, y, x, 0);
+            g = *(unsigned char *)PyArray_GETPTR3(image, y, x, 1);
+            b = *(unsigned char *)PyArray_GETPTR3(image, y, x, 2);
+            rgb2ycbcr(r, g, b, &y1[x], &cb1, &cr1);
+            r = *(unsigned char *)PyArray_GETPTR3(image, y+1, x, 0);
+            g = *(unsigned char *)PyArray_GETPTR3(image, y+1, x, 1);
+            b = *(unsigned char *)PyArray_GETPTR3(image, y+1, x, 2);
+            rgb2ycbcr(r, g, b, &y2[x], &cb2, &cr2);
+
+            cb[x] = (cb1 + cb2) >> 1;
+            cr[x] = (cr1 + cr2) >> 1;
+        }
+
+        // add row markers to audio
+        // sync
+        playtone( 1200 , 20000 ) ;
+        // porch
+        playtone( 1500 ,  2080 ) ;
+
+        // each pixel is 457.6us long in Martin 1
+
+        // add audio for green channel for this row
+        for ( k=0 ; k<COLS_PD ; k++ )
+        { playtone( toneval( y1[k] ) , 190 ) ; }
+
+        for ( k=0 ; k<COLS_PD ; k++ )
+        { playtone( toneval( cb[k] ) , 190 ) ; }
+
+        for ( k=0 ; k<COLS_PD ; k++ )
+        { playtone( toneval( cr[k] ) , 190 ) ; }
+
+        for ( k=0 ; k<COLS_PD ; k++ )
+        { playtone( toneval( y1[k] ) , 190 ) ; }
+
+
+    }  // end for y
+
+    for ( y=0 ; y<16 ; y+=2 )
+    {
+        printf("extra %d\n", y);
+        // add row markers to audio
+        // sync
+        playtone( 1200 , 20000 ) ;
+        // porch
+        playtone( 1500 ,  2080 ) ;
+
+        // each pixel is 457.6us long in Martin 1
+
+        // add audio for green channel for this row
+        for ( k=0 ; k<COLS_PD ; k++ )
+        { playtone( toneval( 0 ) , 190 ) ; }
+
+        for ( k=0 ; k<COLS_PD ; k++ )
+        { playtone( toneval( 0 ) , 190 ) ; }
+
+        for ( k=0 ; k<COLS_PD ; k++ )
+        { playtone( toneval( 0 ) , 190 ) ; }
+
+        for ( k=0 ; k<COLS_PD ; k++ )
+        { playtone( toneval( 0 ) , 190 ) ; }
+    }
+    printf( "Done adding image to audio data.\n" ) ;
+
+}  // end buildaudio_pd120
 
 // ----------------------------------------------------------------------------
 
-PyObject *makesstv(int samplerate, PyArrayObject *image) {
+PyObject *makesstv_m1(int samplerate, PyArrayObject *image) {
 
     // assign values to globals
 
@@ -219,6 +309,7 @@ PyObject *makesstv(int samplerate, PyArrayObject *image) {
     g_samples = 0.0 ;
     g_fudge = 0.0 ;
 
+    printf( "MODE: MARTIN M1\n");
     printf( "Constants check:\n" ) ;
     printf( "      rate = %d\n" , g_rate ) ;
     printf( "      BITS = %d\n" , BITS ) ;
@@ -229,7 +320,7 @@ PyObject *makesstv(int samplerate, PyArrayObject *image) {
 
     double total_us_header = 2210000;
     double total_us_trailer = 940000;
-    double total_us_body = ROWS * ( 6006 + COLS * 457.6 * CHANNELS );
+    double total_us_body = ROWS_M1 * ( 6006 + COLS_M1 * 457.6 * CHANNELS );
     printf( "total duration %.1f seconds\n" , (total_us_header + total_us_body + total_us_trailer ) / 1000000 ) ;
 
     uint32_t total_cycles = (total_us_header + total_us_body + total_us_trailer + 500000) * g_rate / 1000000;
@@ -237,8 +328,54 @@ PyObject *makesstv(int samplerate, PyArrayObject *image) {
     int16_t buffer[total_cycles+10];
     g_audio_ptr = buffer;
 
-    addvisheader() ;
-    buildaudio(image) ;
+    addvisheader(0xAC) ;
+    buildaudio_m1(image) ;
+    addvistrailer() ;
+
+    return PyBytes_FromStringAndSize((const char *)buffer, total_cycles*2 );
+}
+
+// ----------------------------------------------------------------------------
+
+PyObject *makesstv_pd120(int samplerate, PyArrayObject *image) {
+
+    // assign values to globals
+
+    double temp1, temp2, temp3 ;
+    temp1 = (double)( 1 << (BITS - 1) ) ;
+    temp2 = VOLPCT / 100.0 ;
+    temp3 = temp1 * temp2 ;
+    g_scale = (uint32_t)temp3 ;
+
+    g_rate = samplerate;
+    g_twopioverrate = 2.0 * M_PI / g_rate ;
+    g_uspersample = 1000000.0 / (double)g_rate ;
+
+    g_theta = 0.0 ;
+    g_samples = 0.0 ;
+    g_fudge = 0.0 ;
+
+    printf( "MODE: PD-120\n");
+    printf( "Constants check:\n" ) ;
+    printf( "      rate = %d\n" , g_rate ) ;
+    printf( "      BITS = %d\n" , BITS ) ;
+    printf( "    VOLPCT = %d\n" , VOLPCT ) ;
+    printf( "     scale = %d\n" , g_scale ) ;
+    printf( "   us/samp = %f\n" , g_uspersample ) ;
+    printf( "   2p/rate = %f\n\n" , g_twopioverrate ) ;
+
+    double total_us_header = 2210000;
+    double total_us_trailer = 940000;
+    double total_us_body = ROWS_PD * ( 22080 + COLS_PD * 190 * 4 ) / 2;
+    printf( "total duration %.1f seconds\n" , (total_us_header + total_us_body + total_us_trailer ) / 1000000 ) ;
+
+    uint32_t total_cycles = (total_us_header + total_us_body + total_us_trailer + 5000000) * g_rate / 1000000;
+    printf("%d samples\n", total_cycles);
+    int16_t buffer[total_cycles+10];
+    g_audio_ptr = buffer;
+
+    addvisheader(0x5f) ;
+    buildaudio_pd120(image) ;
     addvistrailer() ;
 
     return PyBytes_FromStringAndSize((const char *)buffer, total_cycles*2 );

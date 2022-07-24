@@ -52,7 +52,7 @@ static PyObject *method_afsk(PyObject *self, PyObject *args) {
     return makeafsk(samplerate, 1200, 1200, 2200, frames, lengths, n, total_length);
 }
 
-static PyObject *method_sstv(PyObject *self, PyObject *args) {
+static PyObject *method_sstv_m1(PyObject *self, PyObject *args) {
     PyArrayObject *array = NULL;
     int samplerate = 11025;
 
@@ -71,13 +71,37 @@ static PyObject *method_sstv(PyObject *self, PyObject *args) {
        printf("%d, ", array->dimensions[i]);
     printf("\n");
     printf("typenum: %d\n", array->descr->type_num);
-    return makesstv(samplerate, array);
+    return makesstv_m1(samplerate, array);
+}
+
+static PyObject *method_sstv_pd120(PyObject *self, PyObject *args) {
+    PyArrayObject *array = NULL;
+    int samplerate = 11025;
+
+    if (!PyArg_ParseTuple(args, "O!|i", &PyArray_Type, &array, &samplerate)){
+        PyErr_SetString(PyExc_TypeError, "error reading parameters");
+        return NULL;
+    }
+
+    if (array == NULL || array->nd != 3 ){
+        PyErr_SetString(PyExc_TypeError, "no image or not RGB");
+        return NULL;
+    }
+
+    printf("%d dimentions: ", PyArray_NDIM(array), array->nd );
+    for (int i=0; i<PyArray_NDIM(array); i++)
+       printf("%d, ", array->dimensions[i]);
+    printf("\n");
+    printf("typenum: %d\n", array->descr->type_num);
+    return makesstv_pd120(samplerate, array);
 
 }
 
+
 static PyMethodDef ModemsMethods[] = {
     {"encode_afsk", method_afsk, METH_VARARGS, "encode afsk message"},
-    {"encode_sstv", method_sstv, METH_VARARGS, "encode sstv message"},
+    {"encode_sstv_m1", method_sstv_m1, METH_VARARGS, "encode sstv message as martin m1"},
+    {"encode_sstv_pd120", method_sstv_pd120, METH_VARARGS, "encode sstv message as pd-120"},
     {NULL, NULL, 0, NULL}
 };
 
